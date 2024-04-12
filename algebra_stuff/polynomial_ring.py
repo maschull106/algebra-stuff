@@ -19,7 +19,7 @@ class PolyRing:
         return PolyRingIdeal(self.symbols, gens, self.order)
     
     def __repr__(self):
-        return f"{repr(self.base)}[{", ".join(map(repr, self.symbols))}]"
+        return f"{repr(self.base)}[{', '.join(map(repr, self.symbols))}]"
 
 
 class PolyRingIdeal:
@@ -44,38 +44,40 @@ class PolyRingIdeal:
         for f in self.groebner_basis:
             for i in range(len(self.symbols)):
                 if f.lm.degrees[i] > 0:
-                    if f.lm.degrees[i] == f.lm.total_degree:
+                    if f.lm.degrees[i] == f.lm.total_degree():
                         vars_represented[i] = True
                     break
         return all(vars_represented)
     
     def degree(self):
-        def is_contained(mon_degrees):
+        if not self.has_max_radical():
+            return float("inf")
+        def is_multiple(mon_degrees):
             monomial = Monomial(self.symbols, mon_degrees)
-            if self.contains(monomial):
-                return False
+            for f in self.groebner_basis:
+                if monomial.is_multiple(f.lm):
+                    return True
             quotient_gens.append(monomial)
-            return True
         
         quotient_gens = []
-        self._xplore_monomials(is_contained)
+        self._xplore_monomials(is_multiple)
         return quotient_gens
     
-    def _xplore_monomials(self, operation, current_degrees=None, current=0):
+    def _xplore_monomials(self, stop_operation, current_degrees=None, current=0, new=True):
         # TODO: is bugged: need to go through all the changes at current at once, otherwise some monomials will be considered multiple times
         if current_degrees is None:
             current_degrees = [0]*len(self.symbols)
-        if not operation(current_degrees):
+        if new and stop_operation(current_degrees):
             return
         if current == len(current_degrees):
             return
         current_degrees[current] += 1
-        self._xplore_monomials(operation, current_degrees, current)
+        self._xplore_monomials(stop_operation, current_degrees, current, new=True)
         current_degrees[current] -= 1
-        self._xplore_monomials(operation, current_degrees, current+1)
+        self._xplore_monomials(stop_operation, current_degrees, current+1, new=False)
     
     def __repr__(self):
-        return f"<{", ".join(map(repr, self.gens))}>"
+        return f"<{', '.join(map(repr, self.gens))}>"
     
     @staticmethod
     def reduction_step(f: GroebnerPolynomial, g: GroebnerPolynomial) -> GroebnerPolynomial:
