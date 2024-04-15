@@ -4,8 +4,12 @@ from typing import List, Union
 import algebra_stuff.groebner_polynomial as gb
 
 
-GroebnerPolynomial = "GroebnerPolynomial" # temporary solution because python is stupid
+#GroebnerPolynomial = "GroebnerPolynomial" # temporary solution because python is stupid
 #GroebnerPolynomial = gb.GroebnerPolynomial
+class GroebnerPolynomial:
+    def __new__(self, *args, **kwargs):
+        raise RuntimeError("cannot instantiate not initialized class GroebnerPolynomial")
+
 
 class MonomialOrder:
     def eval(self, monomial: Monomial):
@@ -44,6 +48,14 @@ def base_decomp(n: int, b: int = 10, descending_order: bool = True):
     return decomp
 
 
+class Scalar:
+    # TODO
+    @staticmethod
+    def make(t):
+        return t[0]
+        return t[0] + 1j*t[1]
+    
+    
 class Monomial:
     superscript_numbers = {0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹'}
     
@@ -106,13 +118,6 @@ class Monomial:
             return "1"
         exp_format = lambda e: "" if e == 1 else "".join(map(Monomial.superscript_numbers.get, base_decomp(e)))
         return "".join(repr(x) + exp_format(e) for x, e in zip(self.symbols, self.degrees) if e > 0)
-
-
-class Scalar:
-    # TODO
-    @staticmethod
-    def make(t):
-        return t[0] + 1j*t[1]
 
 
 class MonomialWithCoef:

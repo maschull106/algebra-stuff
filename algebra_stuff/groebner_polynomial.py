@@ -24,6 +24,9 @@ class GroebnerPolynomial:
             poly = sympy.Integer(poly)
         elif isinstance(poly, float):
             poly = sympy.Float(poly)
+        elif isinstance(poly, complex):
+            poly = poly.real + poly.imag*sympy.I
+        poly = poly.expand()
         terms, p_symbols = poly.as_terms()
         if symbols is None:
             symbols = p_symbols
@@ -138,7 +141,8 @@ class GroebnerPolynomial:
     
     def is_zero(self) -> bool:
         if len(self.monomials) > 0 and all(m.coef == 0 for m in self.monomials):
-            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+            if len(self.monomials) > 1:
+                print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             return True
         return len(self.monomials) == 0
     
