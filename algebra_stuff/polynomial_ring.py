@@ -348,8 +348,8 @@ def hom(M: ModuleFromIdeal, N: ModuleFromIdeal) -> np.ndarray:
     return A
 
 
-def hom_rank(M: ModuleFromIdeal, N: ModuleFromIdeal) -> int:
+def hom_rank(M: ModuleFromIdeal, N: ModuleFromIdeal, tol: float = None) -> int:
     m = len(M.basis)
     n = len(N.basis)
     h = hom(M, N)
-    return m*n - np.linalg.matrix_rank(h)
+    return m*n - np.linalg.matrix_rank(h, tol=tol)

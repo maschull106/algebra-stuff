@@ -1,4 +1,13 @@
 from algebra_stuff.polynomial_ring import *
+import time
+
+
+def timer(f, *args):
+    t0 = time.time()
+    res = f(*args)
+    t1 = time.time()
+    print(f"Executed in {t1-t0} seconds")
+    return res
 
 
 R = PolyRing(n=3)
