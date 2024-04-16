@@ -118,6 +118,15 @@ class Monomial:
             return "1"
         exp_format = lambda e: "" if e == 1 else "".join(map(Monomial.superscript_numbers.get, base_decomp(e)))
         return "".join(repr(x) + exp_format(e) for x, e in zip(self.symbols, self.degrees) if e > 0)
+    
+    def __hash__(self):
+        def enum():
+            for symb, d in zip(self.symbols, self.degrees):
+                for _ in range(d):
+                    yield symb
+        
+        t = tuple(hash(symb.name) for symb in enum())
+        return hash(t)
 
 
 class MonomialWithCoef:

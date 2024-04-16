@@ -154,3 +154,8 @@ class GroebnerPolynomial:
         if self.is_zero():
             return "0"
         return " + ".join(map(repr, self.monomials))
+    
+    def __hash__(self):
+        monom_hash = tuple(hash(m.monomial) for m in self.monomials)
+        coef_hash = tuple(hash(m.coef) for m in self.monomials)
+        return hash((monom_hash, coef_hash))
