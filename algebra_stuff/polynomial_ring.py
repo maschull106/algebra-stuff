@@ -1,20 +1,35 @@
 from __future__ import annotations
 from .groebner_polynomial import *
-import numpy as np
+from typing import TYPE_CHECKING
+import algebra_stuff.module as module   # real import
+if TYPE_CHECKING:   # fake import, only for annotations
+    from .module import QuotientRing, RingQuotientModule, IdealQuotientModule
 
 
 class PolyRing:
-    def __init__(self, base=sympy.CC, n: int = 1, order: MonomialOrder = degrevlex):
+    def __init__(self, base=sympy.CC, n: int = 1, order: MonomialOrder = degrevlex, symbols: List[sympy.Symbol]=None, make_symbols_global_vars: bool = True):
         if n < 0:
             raise ValueError
         self.base = base
         self.n = n
-        if n <= 4:
-            s_symbols = ",".join("xyzw"[:n])
-        else:
-            s_symbols = ",".join([f"x{i}" for i in range(1, n+1)])
-        self.symbols = sympy.symbols(s_symbols)
+        if symbols is None or len(symbols) < n:
+            if n <= 4:
+                s_symbols = ",".join("xyzw"[:n])
+            else:
+                s_symbols = ",".join([f"x{i}" for i in range(1, n+1)])
+            symbols = sympy.symbols(s_symbols)
+        self.symbols = symbols[: n]
         self.order = order
+        focus_poly_ring(self)
+        if make_symbols_global_vars:
+            self._make_symbols_global_vars()
+    
+    def _make_symbols_global_vars(self):
+        # convenient but very dirty and potentially dangerous
+        # TODO: doesn't work outside of the module's work
+        for symbol in self.symbols:
+            print(f"Setting global symbol '{symbol.name}'")
+            get_global_scope()[symbol.name] = symbol
     
     def sort_list(self, l: List[GroebnerPolynomial]) -> List[GroebnerPolynomial]:
         return sorted(l, key=lambda f: self.order.eval(f.lm), reverse=True)
@@ -22,8 +37,26 @@ class PolyRing:
     def ideal(self, *gens: GroebnerPolynomial) -> PolyRingIdeal:
         return PolyRingIdeal(self.symbols, gens, self.order)
     
+    def max_ideal(self):
+        # give the ideal (x1, ..., xn)
+        gens = self.symbols
+        return PolyRingIdeal(self.symbols, gens, self.order)
+    
     def __repr__(self):
         return f"{repr(self.base)}[{', '.join(map(repr, self.symbols))}]"
+    
+    def __floordiv__(self, ideal: PolyRingIdeal) -> QuotientRing:
+        # TODO: implement some sanity checks
+        if not isinstance(ideal, PolyRingIdeal):
+            raise TypeError
+        return module.QuotientRing(ideal)
+    
+    def __truediv__(self, ideal: PolyRingIdeal) -> RingQuotientModule:
+        # TODO: implement some sanity checks
+        if not isinstance(ideal, PolyRingIdeal):
+            raise TypeError
+        base_ring = infer_base_ring()
+        return module.RingQuotientModule(base_ring=base_ring, ideal=ideal)
 
 
 class PolyRingIdeal:
@@ -47,6 +80,9 @@ class PolyRingIdeal:
         f_reduced = self.reduce(f, self.groebner_basis)
         return f_reduced.is_zero()
     
+    def contains_ideal(self, ideal: PolyRingIdeal) -> bool:
+        return all(self.contains(f) for f in ideal.groebner_basis)
+    
     def has_max_radical(self) -> bool:
         vars_represented = [False]*len(self.symbols)
         for f in self.groebner_basis:
@@ -58,6 +94,7 @@ class PolyRingIdeal:
         return all(vars_represented)
     
     def degree(self) -> List[GroebnerPolynomial]:
+        # TODO: find better name for this function + combine with degree_for_base function
         if not self.has_max_radical():
             return float("inf")
         def is_multiple(mon_degrees):
@@ -86,22 +123,21 @@ class PolyRingIdeal:
         current_degrees[current] -= 1
         self._xplore_monomials(stop_operation, current_degrees, current+1, new=False)
     
-    def degree_over_square(self) -> List[GroebnerPolynomial]:
+    def degree_for_base(self, base_ideal: PolyRingIdeal) -> List[GroebnerPolynomial]:
         if not self.has_max_radical():
             return float("inf")
         
         def is_mutliple(poly: GroebnerPolynomial):
-            for f in square.groebner_basis:
+            for f in self.groebner_basis:
                 if poly.lm.is_multiple(f.lm):
                     return True
             quotient_gens.append(poly)
             return False
         def stop_cond(mon_degrees):
             monomial = Monomial(self.symbols, mon_degrees)
-            stop = [is_mutliple(g*monomial) for g in self.groebner_basis]
+            stop = [is_mutliple(g*monomial) for g in base_ideal.groebner_basis]
             return all(stop)
         
-        square = self**2
         quotient_gens = []
         self._xplore_monomials(stop_cond)
         quotient_gens = list(map(GroebnerPolynomial.make, quotient_gens))
@@ -232,6 +268,11 @@ class PolyRingIdeal:
         for i in range(len(G)):
             G[i] = G[i].to_monic()
         return G
+    
+    def __eq__(self, other: PolyRingIdeal):
+        if not isinstance(other, PolyRingIdeal):
+            raise TypeError
+        return self.groebner_basis == other.groebner_basis
 
     def __pow__(self, d: int):
         def prod(set):
@@ -241,6 +282,13 @@ class PolyRingIdeal:
             return p
         gens = [prod(s) for s in choices(self.gens, d)]
         return PolyRingIdeal(self.symbols, gens, self.order)
+    
+    def __truediv__(self, other: PolyRingIdeal) -> IdealQuotientModule:
+        # TODO: implement some sanity checks (some alr implemented in IdealQuotientModule, maybe move them here)
+        if not isinstance(other, PolyRingIdeal):
+            raise TypeError
+        base_ring = infer_base_ring()
+        return module.IdealQuotientModule(base_ring, top_ideal=self, bot_ideal=other)
     
 
 def choices(S, size, start_index=0, current_choices=None):
@@ -257,116 +305,6 @@ def choices(S, size, start_index=0, current_choices=None):
         current_choices.pop()
 
 
-class Quotient:
-    def __init__(self, ideal: PolyRingIdeal):
-        self.ideal = ideal
-        self.basis = self._get_basis()
-        
-    def _get_basis(self) -> List[GroebnerPolynomial]:
-        return self.ideal.degree()
-
-
-class ModuleFromIdeal:
-    # module whose structure is defined from an ideal in some undefined way (see child classes for concrete examples)
-    def __init__(self, base_ring: Quotient, ideal: PolyRingIdeal):
-        self.base_ring = base_ring
-        self.structure_ideal = ideal
-        self.basis = self._get_basis()
-        
-    def _get_basis(self) -> List[GroebnerPolynomial]:
-        pass
-    
-    def contains(self, f: GroebnerPolynomial) -> bool:
-        return False
-    
-    def to_basis(self, f: GroebnerPolynomial) -> GroebnerPolynomial:
-        f = GroebnerPolynomial.make(f, order=self.structure_ideal.order, symbols=self.structure_ideal.symbols)
-        orig_f = f
-        f = self.structure_ideal.reduced(f)
-        coefs = []
-        for g in self.basis:
-            c = 0
-            if f.lm.is_multiple(g.lm):
-                c = f.lc/g.lc
-                f = f - c*g
-            coefs.append(c)
-        if not f.is_zero():
-            print("WTFFFF", orig_f, f)
-        return coefs
-    
-    def get_matrix_representation(self, g: GroebnerPolynomial):
-        # for g an element of the base ring, compute the matrix representation of the transformation induced by g
-        matrix = [self.to_basis(g*f) for f in self.basis]
-        matrix = np.array(matrix).T
-        return matrix
-    
-    def get_matrices_representation(self):
-        return [self.get_matrix_representation(g) for g in self.base_ring.basis]
-    
-    def construct_endo_matrix(self):
-        n = len(self.basis)
-        k = len(self.base_ring.basis)
-        F = self.get_matrices_representation()
-        M = np.zeros((n*n*k, n*n))
-        for f_ind in range(k):
-            for i in range(n):
-                for j in range(n):
-                    for l in range(n):
-                        ind = f_ind*n**2 + i*n + j
-                        M[ind, i*n+l] += F[f_ind][l, j]
-                        M[ind, l*n+j] -= F[f_ind][i, l]
-                        print(i*n+l)
-                        print(l*n+j)
-                        print()
-        return M      
-
-
-class RingQuotient(ModuleFromIdeal):
-    # of the form R/I
-    def __init__(self, base_ring: Quotient, ideal: PolyRingIdeal):
-        super().__init__(base_ring, ideal)
-    
-    def _get_basis(self) -> List[GroebnerPolynomial]:
-        return self.structure_ideal.degree()
-    
-    def contains(self, f: GroebnerPolynomial) -> bool:
-        return True
-    
-
-class IdealQuotient(ModuleFromIdeal):
-    # of the for I/I^2
-    def __init__(self, base_ring: Quotient, ideal: PolyRingIdeal):
-        self.ideal = ideal
-        super().__init__(base_ring, ideal**2)
-    
-    def _get_basis(self) -> List[GroebnerPolynomial]:
-        return self.ideal.degree_over_square()
-    
-    def contains(self, f: GroebnerPolynomial) -> bool:
-        return self.ideal.contains(f)
-
-
-def hom(M: ModuleFromIdeal, N: ModuleFromIdeal) -> np.ndarray:
-    ring = M.base_ring
-    m = len(M.basis)
-    n = len(N.basis)
-    k = len(ring.basis)
-    FM = M.get_matrices_representation()
-    FN = N.get_matrices_representation()
-    A = np.zeros((n*m*k, n*m))
-    for f_ind in range(k):
-        for i in range(n):
-            for j in range(m):
-                ind = f_ind*n*m + i*m + j
-                for l in range(m):
-                    A[ind, i*m+l] += FM[f_ind][l, j]
-                for l in range(n):
-                    A[ind, l*m+j] -= FN[f_ind][i, l]
-    return A
-
-
-def hom_rank(M: ModuleFromIdeal, N: ModuleFromIdeal, tol: float = None) -> int:
-    m = len(M.basis)
-    n = len(N.basis)
-    h = hom(M, N)
-    return m*n - np.linalg.matrix_rank(h, tol=tol)
+def ideal(*gens: GroebnerPolynomial) -> PolyRingIdeal:
+    poly_ring = infer_poly_ring()
+    return PolyRingIdeal(poly_ring.symbols, gens, poly_ring.order)

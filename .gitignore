@@ -1,0 +1,5 @@
+__pycache__/
+algebra_stuff.egg-info/
+algebra_stuff/__pycache__/
+build/
+dist/

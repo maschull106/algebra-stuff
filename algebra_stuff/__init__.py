@@ -1,1 +1,3 @@
-from .polynomial_ring import *
+from .module import *
+
+init_globals()
