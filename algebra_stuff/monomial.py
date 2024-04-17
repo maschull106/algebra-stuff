@@ -2,7 +2,7 @@ from __future__ import annotations
 from sympy import Symbol
 from typing import List, Union
 import algebra_stuff.groebner_polynomial as gb
-from .common import init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope
+from .common import Params, init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope
 
 
 #GroebnerPolynomial = "GroebnerPolynomial" # temporary solution because python is stupid

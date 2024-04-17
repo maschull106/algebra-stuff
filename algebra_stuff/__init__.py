@@ -1,3 +1,3 @@
-from .module import *
+from .hom import *
 
 init_globals()

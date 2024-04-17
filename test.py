@@ -1,4 +1,4 @@
-from algebra_stuff.module import *
+from algebra_stuff import *
 import time
 
 
@@ -18,8 +18,8 @@ x, y, z = R.symbols
 f=GroebnerPolynomial.make(x**3+5*x*y**2+2*y*z+z**4+z-9, symbols=R.symbols)
 
 I = R.ideal(x**2, x*y**2, x*y*z, x*z**2, y**2*z**2, y*z**3, z**4, y**3-x*z)
-I = R.ideal(x**2, y**2, z**2)
-I = R.ideal(x, y, z)**2
+# I = R.ideal(x**2, y**2, z**2)
+# I = R.ideal(x, y, z)**2
 
 S = R//I
 O = R/I
@@ -58,3 +58,6 @@ def make_poly(s: str):
 
 s = list(map(make_poly, s.split()))
 s = R.sort_list(s)
+
+
+# R=QQ[x,y,z]; I=ideal(x^2, x*y^2, x*y*z, x*z^2, y^2*z^2, y*z^3, z^4, y^3-x*z); J=I/I^2; O=R/I;

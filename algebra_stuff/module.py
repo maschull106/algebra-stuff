@@ -26,6 +26,13 @@ class QuotientRing(FiniteDimRing):
     
     def __eq__(self, other: FiniteDimRing):
         return isinstance(other, QuotientRing) and self.ideal == other.ideal
+    
+    def __repr__(self):
+        s_ring = repr(self.ideal.base)
+        s_ideal = repr(self.ideal)
+        length = max(len(s_ring), len(s_ideal))
+        pad = lambda s: " "*((length-len(s))//2) + s + " "*((length-len(s)+1)//2)
+        return pad(s_ring) + "\n" + "―"*length + "\n" + pad(s_ideal)
 
 
 class Module:
@@ -103,6 +110,15 @@ class RingQuotientModule(ModuleFromIdeal):
     
     def contains(self, f: GroebnerPolynomial) -> bool:
         return True
+    
+    def __repr__(self):
+        s_ring = repr(self.structure_ideal.base)
+        s_ideal = repr(self.structure_ideal)
+        length = max(len(s_ring), len(s_ideal))
+        pad = lambda s: " "*((length-len(s))//2) + s + " "*((length-len(s)+1)//2)
+        s = pad(s_ring) + "\n" + "―"*length + "\n" + pad(s_ideal)
+        s_base = repr(self.base_ring)
+        return concat_multiline_strings(s, s_base)
 
 
 class IdealQuotientModule(ModuleFromIdeal):
@@ -117,57 +133,28 @@ class IdealQuotientModule(ModuleFromIdeal):
     
     def contain(self, f: GroebnerPolynomial) -> bool:
         return self.top_ideal.contains(f)
-
-
-def hom_calculation_complexity(M: ModuleFromIdeal, N: ModuleFromIdeal):
-    ring = M.base_ring
-    m = len(M.basis)
-    n = len(N.basis)
-    k = len(ring.basis)
-    print("k =", k)
-    print("m =", m)
-    print("n =", n)
-    print("total matrix entries:", k*m*n*m*n)
     
-
-def hom_constraints(M: ModuleFromIdeal, N: ModuleFromIdeal) -> np.ndarray:
-    if not M.base_ring == N.base_ring:
-        raise TypeError("modules are not defined over the same ring")
-    
-    ring = M.base_ring
-    m = len(M.basis)
-    n = len(N.basis)
-    k = len(ring.basis)
-    FM = M.get_matrices_representation()
-    FN = N.get_matrices_representation()
-    A = np.zeros((n*m*k, n*m))
-    for f_ind in range(k):
-        for i in range(n):
-            for j in range(m):
-                ind = f_ind*n*m + i*m + j
-                for l in range(m):
-                    A[ind, i*m+l] += FM[f_ind][l, j]
-                for l in range(n):
-                    A[ind, l*m+j] -= FN[f_ind][i, l]
-    return A
-    
-    
-def hom_rank(M: ModuleFromIdeal, N: ModuleFromIdeal, tol: float = None) -> int:
-    m = len(M.basis)
-    n = len(N.basis)
-    h = hom_constraints(M, N)
-    return m*n - np.linalg.matrix_rank(h, tol=tol)
+    def __repr__(self):
+        s_top_ideal = repr(self.top_ideal)
+        s_bot_ideal = repr(self.structure_ideal)
+        length = max(len(s_top_ideal), len(s_bot_ideal))
+        pad = lambda s: " "*((length-len(s))//2) + s + " "*((length-len(s)+1)//2)
+        s = pad(s_top_ideal) + "\n" + "―"*length + "\n" + pad(s_bot_ideal)
+        s_base = repr(self.base_ring)
+        return concat_multiline_strings(s, s_base)
 
 
-def null_space(A: np.ndarray):
-    # TODO: make sure this is equivalent to just scipy.linalg.null_space(A)
-    # just scipy.linalg.null_space(A) works but seems to be way slower for A with nb of rows (a lot) bigger than number of columns
-    P, L, U = scipy.linalg.lu(A)
-    basis = scipy.linalg.null_space(U)
-    return basis
-
-
-def hom(M: ModuleFromIdeal, N: ModuleFromIdeal) -> np.ndarray:
-    C = hom_constraints(M, N)
-    basis = null_space(C)
-    return basis
+def concat_multiline_strings(s1: str, s2: str, sep="module of", sep_index=1):
+    sep = " "*4 + sep + " "*4
+    _sep = " "*len(sep)
+    l1 = s1.split("\n")
+    l2 = s2.split("\n")
+    length1 = len(l1[0]) if len(l1) > 0 else 0
+    final_lines = []
+    for i, (a, b) in enumerate(zip(l1, l2)):
+        current_sep = sep if i == sep_index else _sep
+        final_lines.append(a+current_sep+b)
+    for i in range(len(l1), len(l2)):
+        current_sep = sep if i == sep_index else _sep
+        final_lines.append(" "*length1 + current_sep + l2[i])
+    return "\n".join(final_lines)

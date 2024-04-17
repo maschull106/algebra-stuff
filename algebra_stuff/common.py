@@ -5,6 +5,11 @@ if TYPE_CHECKING:   # fake import, only for annotations
     from algebra_stuff import *
 
 
+class Params:
+    verbose = False
+    long = 80
+    
+
 class Globals:
     INSTANCE = None
     

@@ -35,15 +35,16 @@ class PolyRing:
         return sorted(l, key=lambda f: self.order.eval(f.lm), reverse=True)
         
     def ideal(self, *gens: GroebnerPolynomial) -> PolyRingIdeal:
-        return PolyRingIdeal(self.symbols, gens, self.order)
+        return PolyRingIdeal(self, gens)
     
     def max_ideal(self):
         # give the ideal (x1, ..., xn)
         gens = self.symbols
-        return PolyRingIdeal(self.symbols, gens, self.order)
+        return PolyRingIdeal(self, gens)
     
     def __repr__(self):
-        return f"{repr(self.base)}[{', '.join(map(repr, self.symbols))}]"
+        sep = ", " if Params.verbose else ","
+        return f"{repr(self.base)}[{sep.join(map(repr, self.symbols))}]"
     
     def __floordiv__(self, ideal: PolyRingIdeal) -> QuotientRing:
         # TODO: implement some sanity checks
@@ -60,10 +61,11 @@ class PolyRing:
 
 
 class PolyRingIdeal:
-    def __init__(self, symbols: List[Symbol], gens: List[GroebnerPolynomial], order: MonomialOrder = degrevlex):
-        self.symbols = symbols
-        self.order = order
-        self.gens = [GroebnerPolynomial.make(poly, order=order, symbols=symbols) for poly in gens]
+    def __init__(self, base: PolyRing, gens: List[GroebnerPolynomial]):
+        self.base = base
+        self.symbols = base.symbols
+        self.order = base.order
+        self.gens = [GroebnerPolynomial.make(poly, order=self.order, symbols=self.symbols) for poly in gens]
         self.groebner_basis: List[GroebnerPolynomial] = None
         self._compute_groebner_basis()
     
@@ -166,7 +168,11 @@ class PolyRingIdeal:
         pass
     
     def __repr__(self):
-        return f"<{', '.join(map(repr, self.gens))}>"
+        sep = ", " if Params.verbose else ","
+        s = f"<{sep.join(map(repr, self.gens))}>"
+        if len(s) > Params.long:
+            return "[long ideal]"
+        return s
     
     @staticmethod
     def reduction_step(f: GroebnerPolynomial, g: GroebnerPolynomial) -> GroebnerPolynomial:
@@ -281,7 +287,7 @@ class PolyRingIdeal:
                 p *= g
             return p
         gens = [prod(s) for s in choices(self.gens, d)]
-        return PolyRingIdeal(self.symbols, gens, self.order)
+        return PolyRingIdeal(self.base, gens)
     
     def __truediv__(self, other: PolyRingIdeal) -> IdealQuotientModule:
         # TODO: implement some sanity checks (some alr implemented in IdealQuotientModule, maybe move them here)
@@ -307,4 +313,4 @@ def choices(S, size, start_index=0, current_choices=None):
 
 def ideal(*gens: GroebnerPolynomial) -> PolyRingIdeal:
     poly_ring = infer_poly_ring()
-    return PolyRingIdeal(poly_ring.symbols, gens, poly_ring.order)
+    return PolyRingIdeal(poly_ring, gens)

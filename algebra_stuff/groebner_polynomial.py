@@ -151,9 +151,22 @@ class GroebnerPolynomial:
         return self / c
         
     def __repr__(self):
+        # TODO: display - instead of +- when coefficient is negative
         if self.is_zero():
             return "0"
-        return " + ".join(map(repr, self.monomials))
+        sep_plus = " + " if Params.verbose else "+"
+        sep_minus = " - " if Params.verbose else "-"
+        s_poly = repr(self.monomials[0])
+        for i in range(1, len(self.monomials)):
+            s = repr(self.monomials[i])
+            if s[0] == "-":
+                s_poly += sep_minus
+                s = s[1:]
+            else:
+                s_poly += sep_plus
+            s_poly += s
+        return s_poly
+        #return sep_plus.join(map(repr, self.monomials))
     
     def __hash__(self):
         monom_hash = tuple(hash(m.monomial) for m in self.monomials)
