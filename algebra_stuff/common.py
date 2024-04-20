@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Dict, Callable
+from dataclasses import dataclass
+import time
 #import algebra_stuff as alg     # real import
 if TYPE_CHECKING:   # fake import, only for annotations
     from algebra_stuff import *
@@ -8,6 +10,40 @@ if TYPE_CHECKING:   # fake import, only for annotations
 class Params:
     verbose = False
     long = 80
+
+
+@dataclass
+class TimeStep:
+    t: float
+    descr: str
+
+
+class AA:
+    def __init__(self, time_steps: List[TimeStep]):
+        self.time_steps = time_steps
+    
+    def __repr__(self):
+        return "\n".join(f"{step.descr}: {step.t} s" for step in self.time_steps)
+    
+    
+class ExecTimes:
+    _current_steps: List[TimeStep] = []
+    
+    @classmethod
+    def track_time(cls, func: Callable):
+        cls._current_steps.append(TimeStep(time.time(), "end_of_func"))
+        name = func.__name__
+        time_steps = AA([
+            TimeStep(cls._current_steps[i+1].t - cls._current_steps[i].t, cls._current_steps[i].descr)
+            for i in range(len(cls._current_steps)-1)
+        ])
+        setattr(cls, name, time_steps)
+        cls._current_steps.clear()
+    
+    @classmethod
+    def time_step(cls, description=""):
+        # description should describe the task that will be executed until the next time step
+        cls._current_steps.append(TimeStep(time.time(), description))
     
 
 class Globals:

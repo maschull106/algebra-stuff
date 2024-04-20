@@ -16,18 +16,17 @@ def hom_constraints(M: ModuleFromIdeal, N: ModuleFromIdeal) -> np.ndarray:
     if not M.base_ring == N.base_ring:
         raise TypeError("modules are not defined over the same ring")
     
-    import time
-    times = [time.time()]
+    ExecTimes.time_step("get matrices of M")
     ring = M.base_ring
     m = len(M.basis)
     n = len(N.basis)
     k = len(ring.basis)
     FM = M.get_matrices_representation()
-    times.append(time.time())
+    ExecTimes.time_step("get matrices of N")
     FN = N.get_matrices_representation()
-    times.append(time.time())
+    ExecTimes.time_step(f"init zero matrix of dim {n*m*k} x {n*m}")
     A = np.zeros((n*m*k, n*m))
-    times.append(time.time())
+    ExecTimes.time_step("fill the matrix with constraints")
     for f_ind in range(k):
         for i in range(n):
             for j in range(m):
@@ -38,12 +37,10 @@ def hom_constraints(M: ModuleFromIdeal, N: ModuleFromIdeal) -> np.ndarray:
                 #     A[ind, i*m+l] += FM[f_ind][l, j]
                 # for l in range(n):
                 #     A[ind, l*m+j] -= FN[f_ind][i, l]
-    times.append(time.time())
-    time_diffs = [times[i]-times[i-1] for i in range(1, len(times))]
-    print(time_diffs)
+    ExecTimes.track_time(hom_constraints)
     return A
-    
-    
+
+
 def hom_rank(M: ModuleFromIdeal, N: ModuleFromIdeal, tol: float = None) -> int:
     m = len(M.basis)
     n = len(N.basis)
