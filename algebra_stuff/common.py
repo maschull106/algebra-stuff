@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict, Callable
 from dataclasses import dataclass
 import time
+import random
 #import algebra_stuff as alg     # real import
 if TYPE_CHECKING:   # fake import, only for annotations
     from algebra_stuff import *
@@ -10,6 +11,7 @@ if TYPE_CHECKING:   # fake import, only for annotations
 class Params:
     verbose = False
     long = 80
+    focus_on_display = False
 
 
 @dataclass
@@ -27,7 +29,8 @@ class AA:
     
     
 class ExecTimes:
-    _current_steps: List[TimeStep] = []
+    _current_steps: Dict[str, List[TimeStep]] = {}
+    _current_context: str = ""
     
     @classmethod
     def track_time(cls, func: Callable):
@@ -43,8 +46,28 @@ class ExecTimes:
     @classmethod
     def time_step(cls, description=""):
         # description should describe the task that will be executed until the next time step
-        cls._current_steps.append(TimeStep(time.time(), description))
-    
+        cls._current_steps.setdefault(cls._current_context, []).append(TimeStep(time.time(), description))
+
+    @classmethod
+    def track_time(cls, func: Callable):
+        def time_tracked_f(*args, **kwargs):
+            name = func.__name__
+            context = name + str(random.randint(10**10, 10**11))
+            past_context = cls._current_context
+            cls._current_context = context
+            res = func(*args, **kwargs)
+            cls.time_step(description="end of func")
+            time_steps = AA([
+            TimeStep(cls._current_steps[context][i+1].t - cls._current_steps[context][i].t, cls._current_steps[context][i].descr)
+                for i in range(len(cls._current_steps[context])-1)
+            ])
+            setattr(cls, name, time_steps)
+            del cls._current_steps[context]
+            cls._current_context = past_context
+            return res
+        
+        return time_tracked_f
+
 
 class Globals:
     INSTANCE = None

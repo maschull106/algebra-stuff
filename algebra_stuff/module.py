@@ -1,7 +1,10 @@
 from __future__ import annotations
 from .polynomial_ring import *
 import numpy as np
-import scipy
+from typing import Callable
+
+
+Morphism = Callable[[GroebnerPolynomial], GroebnerPolynomial]
 
 
 class FiniteDimRing:
@@ -11,6 +14,10 @@ class FiniteDimRing:
     
     def _get_basis(self) -> List[GroebnerPolynomial]:
         pass
+    
+    @property
+    def dim(self):
+        return len(self.basis)
     
     def __eq__(self, other: FiniteDimRing):
         return False
@@ -28,6 +35,8 @@ class QuotientRing(FiniteDimRing):
         return isinstance(other, QuotientRing) and self.ideal == other.ideal
     
     def __repr__(self):
+        if Params.focus_on_display: # TODO: move this in the base class
+            focus_base_ring(self)
         s_ring = repr(self.ideal.base)
         s_ideal = repr(self.ideal)
         length = max(len(s_ring), len(s_ideal))
@@ -48,20 +57,25 @@ class Module:
         # TODO: implement checking that it is indeed a module over the given ring
         self.base_ring = base_ring
     
+    @property
+    def dim(self):
+        return len(self.basis)
+    
     def contains(self, f: GroebnerPolynomial) -> bool:
         return False
     
     def to_basis(self, f: GroebnerPolynomial) -> List[Scalar]:
         pass
     
-    def get_matrix_representation(self, g: GroebnerPolynomial):
-        # for g an element of the base ring, compute the matrix representation of the transformation induced by g
-        matrix = [self.to_basis(g*f) for f in self.basis]
+    def get_matrix_representation(self, phi: Morphism):
+        # for phi an endomorphism on the module, compute the matrix representation
+        matrix = [self.to_basis(phi(f)) for f in self.basis]
         matrix = np.array(matrix).T
         return matrix
     
     def get_matrices_representation(self):
-        return [self.get_matrix_representation(g) for g in self.base_ring.basis]
+        # for every g in the basis of the base ring, compute the matrix representation of the transformation induced by g
+        return [self.get_matrix_representation(lambda f: g*f) for g in self.base_ring.basis]
     
     def construct_endo_matrix(self):
         n = len(self.basis)

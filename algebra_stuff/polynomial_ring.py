@@ -43,6 +43,8 @@ class PolyRing:
         return PolyRingIdeal(self, gens)
     
     def __repr__(self):
+        if Params.focus_on_display:
+            focus_poly_ring(self)
         sep = ", " if Params.verbose else ","
         return f"{repr(self.base)}[{sep.join(map(repr, self.symbols))}]"
     
