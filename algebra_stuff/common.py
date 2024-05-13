@@ -33,17 +33,6 @@ class ExecTimes:
     _current_context: str = ""
     
     @classmethod
-    def track_time(cls, func: Callable):
-        cls._current_steps.append(TimeStep(time.time(), "end_of_func"))
-        name = func.__name__
-        time_steps = AA([
-            TimeStep(cls._current_steps[i+1].t - cls._current_steps[i].t, cls._current_steps[i].descr)
-            for i in range(len(cls._current_steps)-1)
-        ])
-        setattr(cls, name, time_steps)
-        cls._current_steps.clear()
-    
-    @classmethod
     def time_step(cls, description=""):
         # description should describe the task that will be executed until the next time step
         cls._current_steps.setdefault(cls._current_context, []).append(TimeStep(time.time(), description))

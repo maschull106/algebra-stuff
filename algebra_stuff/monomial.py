@@ -1,15 +1,14 @@
 from __future__ import annotations
 from sympy import Symbol
-from typing import List, Union
-import algebra_stuff.groebner_polynomial as gb
+from typing import TYPE_CHECKING, List, Union
+import algebra_stuff.groebner_polynomial as gb  # real import
+if TYPE_CHECKING:   # fake import, only for annotations
+    from .groebner_polynomial import GroebnerPolynomial
 from .common import Params, ExecTimes, init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope
 
-
-#GroebnerPolynomial = "GroebnerPolynomial" # temporary solution because python is stupid
-#GroebnerPolynomial = gb.GroebnerPolynomial
-class GroebnerPolynomial:
-    def __new__(self, *args, **kwargs):
-        raise RuntimeError("cannot instantiate not initialized class GroebnerPolynomial")
+# class GroebnerPolynomial:
+#     def __new__(self, *args, **kwargs):
+#         raise RuntimeError("cannot instantiate not initialized class GroebnerPolynomial")
 
 
 class MonomialOrder:
@@ -128,6 +127,11 @@ class Monomial:
         
         t = tuple(hash(symb.name) for symb in enum())
         return hash(t)
+    
+    def macaulay2_repr(self):
+        if self.is_constant():
+            return "1"
+        return "*".join(repr(x) + "^" + repr(e) for x, e in zip(self.symbols, self.degrees) if e > 0)
 
 
 class MonomialWithCoef:
@@ -159,11 +163,7 @@ class MonomialWithCoef:
             return MonomialWithCoef(self.coef/other, self.monomial)
         raise TypeError
     
-    def __repr__(self):
-        if self.monomial.is_constant():
-            s_mon = ""
-        else:
-            s_mon = repr(self.monomial)
+    def coef_repr(self):
         if self.coef == 1 and not self.monomial.is_constant():
             s_coef = ""
         elif self.coef == -1 and not self.monomial.is_constant():
@@ -174,6 +174,24 @@ class MonomialWithCoef:
                     s_coef = repr(int(self.coef.real))
                 else:
                     s_coef = repr(self.coef.real)
+            elif isinstance(self.coef, float) and self.coef.is_integer():
+                s_coef = repr(int(self.coef))
             else:
                 s_coef = repr(self.coef)
+        return s_coef
+    
+    def __repr__(self):
+        if self.monomial.is_constant():
+            s_mon = ""
+        else:
+            s_mon = repr(self.monomial)
+        s_coef = self.coef_repr()
         return s_coef + s_mon
+
+    def macaulay2_repr(self):
+        if self.monomial.is_constant():
+            return self.coef_repr()
+        s_mon = self.monomial.macaulay2_repr()
+        s_coef = self.coef_repr()
+        return s_coef + "*" + s_mon
+        

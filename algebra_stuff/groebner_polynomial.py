@@ -172,3 +172,6 @@ class GroebnerPolynomial:
         monom_hash = tuple(hash(m.monomial) for m in self.monomials)
         coef_hash = tuple(hash(m.coef) for m in self.monomials)
         return hash((monom_hash, coef_hash))
+    
+    def macaulay2_repr(self):
+        return "+".join(monom.macaulay2_repr for monom in self.monomials)
