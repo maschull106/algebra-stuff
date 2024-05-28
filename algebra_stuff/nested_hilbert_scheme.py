@@ -29,7 +29,8 @@ class YoungDiagramIdeals:
 
     @classmethod
     def from_input(self, diagram: List[int], R: PolyRing = None):
-        
+        pass
+    
     def __getitem__(self, i: int, j: int):
         """row i, column j"""
         return self.nested_ideals[i][j]
@@ -61,26 +62,6 @@ class YoungDiagramIdeals:
     def index_mapping(self, i: int, j: int) -> int:
         """convert index (i, j) to the corresponding index if all the rows were concatenated"""
         return sum(len(self.nested_ideals[k]) for k in range(i)) + j
-    
-    @staticmethod
-    def corner_repr(right: bool = False, left: bool = False, top: bool = False, bottom: bool = False):
-        if right:
-            if top: return '┐'
-            if bottom: return '┘'
-            return '┤'
-        if left:
-            if top: return '┌'
-            if bottom: return '└'
-            return '├'
-        if top: return '┬'
-        if bottom: return '┴'
-        return '┼'
-                
-    def row_repr(self, ind: int, length: int, prev_length: int, next_length: int, first: bool = False, last: bool = False) -> str:
-        return ""
-    
-    def __repr__(self):
-        return ""
 
 
 class DoubleNestedHilbertScheme:
@@ -107,6 +88,55 @@ class DoubleNestedHilbertScheme:
     
     def tangent_space(self, nested_ideals: List[List[PolyRingIdeal]]):
         return DoubleNestedHilbertSchemeTangentSpace(self, nested_ideals)
+    
+    @staticmethod
+    def corner_repr(right: bool = False, left: bool = False, top: bool = False, bottom: bool = False):
+        if right:
+            if top: return '┐'
+            if bottom: return '┘'
+            return '┤'
+        if left:
+            if top: return '┌'
+            if bottom: return '└'
+            return '├'
+        if top: return '┬'
+        if bottom: return '┴'
+        return '┼'
+
+    def row_repr(self, ind: int, length: int, next_length: int = -1, horizontal_pad: int = 5) -> str:
+        subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}
+        
+        line = self.corner_repr(left=True, bottom=(0>=next_length))
+        middle = '│'
+        l = max(length, next_length)
+        for i in range(length):
+            line += '─'*horizontal_pad
+            line += self.corner_repr(right=(i==l-1), bottom=(i>=next_length))
+            middle += f" Z{subscript_numbers[ind+1]}{subscript_numbers[i+1]} │"
+        for i in range(length, next_length):
+            line += '─'*horizontal_pad
+            line += self.corner_repr(right=(i==l-1), top=True)
+        return "\n".join((middle, line))
+
+    def __repr__(self):
+        if len(self.diagram) == 0:
+            return ""
+        
+        next_length = lambda i: (self.diagram[i+1] if i < len(self.diagram)-1 else -1)
+        horizontal_pad = 5
+        top = self.corner_repr(left=True, top=True)
+        top_length = self.diagram[0]
+        for i in range(top_length):
+            top += '─'*horizontal_pad
+            top += self.corner_repr(right=(i==top_length-1), top=True)
+        top += "\n"
+        s = "\n".join(
+            [
+                self.row_repr(i, self.diagram[i], next_length(i), horizontal_pad=horizontal_pad)
+                for i in range(len(self.diagram))
+            ]
+        )
+        return top + s
 
 
 class DoubleNestedHilbertSchemeTangentSpace:
