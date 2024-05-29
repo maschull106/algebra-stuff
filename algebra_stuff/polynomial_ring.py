@@ -24,11 +24,11 @@ class PolyRing:
         if make_symbols_global_vars:
             self._make_symbols_global_vars()
     
-    def _make_symbols_global_vars(self):
+    def _make_symbols_global_vars(self, verbose: bool = True):
         # convenient but very dirty and potentially dangerous
         # TODO: doesn't work outside of the module's work
         for symbol in self.symbols:
-            print(f"Setting global symbol '{symbol.name}'")
+            if verbose: print(f"Setting global symbol '{symbol.name}'")
             get_global_scope()[symbol.name] = symbol
     
     def sort_list(self, l: List[GroebnerPolynomial]) -> List[GroebnerPolynomial]:

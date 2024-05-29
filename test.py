@@ -209,8 +209,8 @@ def test_hom_rank(prompt: Macaulay2Prompt, I: PolyRingIdeal):
     symbols = R.symbols
     base = "QQ"
     m2_eqs = [f.macaulay2_repr for f in I.gens]
-    ring_def = f"R = {base}[{",".join(map(repr, symbols))}]"
-    ideal_def = f"I = ideal({",".join(m2_eqs)})"
+    ring_def = f"R = {base}[{','.join(map(repr, symbols))}]"
+    ideal_def = f"I = ideal({','.join(m2_eqs)})"
     degree_comp = "degree Hom(I/I^2, R/I)"
     cmds = [ring_def, ideal_def, degree_comp]
     out = prompt.write(";".join(cmds))
@@ -225,3 +225,6 @@ def random_poly(R: PolyRing, degree: int, with_constant_term=False):
     pass
 def random_ideal(R: PolyRing):
     pass
+
+
+H = DoubleNestedHilbertScheme([2,1,1], R)

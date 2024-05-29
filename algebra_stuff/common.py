@@ -69,6 +69,7 @@ class Globals:
     
     def initialize(self):
         self._scope = globals()  # scope where declaration of global variables will happen
+        self._scope_history = []    # for reverting to previous scope
         self._fields = []    # TODO: implement fields
         self._poly_rings: List[PolyRing] = []
         self._base_rings: List[FiniteDimRing] = []   # for module construction (only rings that are finite dimensional as vector spaces for now)
@@ -100,7 +101,14 @@ class Globals:
     
     def set_scope(self, scope: dict):
         # set the scope where declaration of global variables will happen
+        self._scope_history.append(self._scope)
         self._scope = scope
+    
+    def revert_global_scope(self):
+        if len(self._scope_history) == 0:
+            return
+        self._scope = self._scope_history[-1]
+        self._scope_history.pop()
 
 
 def init_globals():
@@ -123,6 +131,9 @@ def get_global_scope() -> dict:
 
 def set_global_scope(scope: dict):
     GLOBALS.set_scope(scope)
+
+def revert_global_scope():
+    GLOBALS.revert_global_scope()
 
 
 GLOBALS = Globals()

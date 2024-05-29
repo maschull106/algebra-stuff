@@ -1,10 +1,12 @@
+from __future__ import annotations
 from .hilbert_scheme import *
 from typing import Tuple
 
 
 class YoungDiagramIdeals:
-    def __init__(self, diagram: List[int], nested_ideals: List[List[PolyRingIdeal]], R: PolyRing = None):
-        self.diagram = diagram
+    def __init__(self, base: DoubleNestedHilbertScheme, nested_ideals: List[List[PolyRingIdeal]], R: PolyRing = None):
+        self.base = base
+        self.diagram = base.diagram
         self.nested_ideals = nested_ideals
         if R is None:
             R = infer_poly_ring()
@@ -26,13 +28,10 @@ class YoungDiagramIdeals:
             raise ValueError
         if not all(map(inclusion_constraint, self.columns())):
             raise ValueError
-
-    @classmethod
-    def from_input(self, diagram: List[int], R: PolyRing = None):
-        pass
     
-    def __getitem__(self, i: int, j: int):
+    def __getitem__(self, pos: Tuple[int, int]):
         """row i, column j"""
+        i, j = pos
         return self.nested_ideals[i][j]
     
     def __iter__(self):
@@ -50,7 +49,8 @@ class YoungDiagramIdeals:
         column = []
         row_ind = 0
         while row_ind < len(self.diagram) and self.diagram[row_ind] >= i+1:
-            column.append(self.nested_ideals[i])
+            column.append(self.nested_ideals[row_ind][i])
+            row_ind += 1
         return column
     
     def rows(self) -> List[List[PolyRingIdeal]]:
@@ -62,6 +62,19 @@ class YoungDiagramIdeals:
     def index_mapping(self, i: int, j: int) -> int:
         """convert index (i, j) to the corresponding index if all the rows were concatenated"""
         return sum(len(self.nested_ideals[k]) for k in range(i)) + j
+    
+    def __repr__(self):
+        subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}    # TODO: put this in a more global variable
+        unk = '�'
+        get_subscript = lambda n: subscript_numbers[n] if 0 <= n <= 9 else unk
+        
+        s_base = self.base.__repr__('I')
+        s_ring = f"Ideals of {self.base.R}"
+        s_ideals = []
+        for i, row in enumerate(self.rows()):
+            for j, I in enumerate(row):
+                s_ideals.append(f"I{get_subscript(i+1)}{get_subscript(j+1)} = {I}")
+        return s_base + "\n" + s_ring + "\n" + "\n".join(s_ideals)
 
 
 class DoubleNestedHilbertScheme:
@@ -81,13 +94,18 @@ class DoubleNestedHilbertScheme:
         """
         diagram: a representation of the Young diagram that defines the structure of the space
         """
+        # TODO: add sanity check on diagram shape
         if R is None:
             R = infer_poly_ring()
         self.R = R
         self.diagram = diagram
     
-    def tangent_space(self, nested_ideals: List[List[PolyRingIdeal]]):
-        return DoubleNestedHilbertSchemeTangentSpace(self, nested_ideals)
+    def tangent_space(self, nested_ideals: Union[YoungDiagramIdeals, List[List[PolyRingIdeal]]]):
+        if isinstance(nested_ideals, YoungDiagramIdeals):
+            return DoubleNestedHilbertSchemeTangentSpace(self, nested_ideals)
+        if isinstance(nested_ideals, list):
+            return DoubleNestedHilbertSchemeTangentSpace.from_ideal_list(self, nested_ideals)
+        raise TypeError
     
     @staticmethod
     def corner_repr(right: bool = False, left: bool = False, top: bool = False, bottom: bool = False):
@@ -103,8 +121,10 @@ class DoubleNestedHilbertScheme:
         if bottom: return '┴'
         return '┼'
 
-    def row_repr(self, ind: int, length: int, next_length: int = -1, horizontal_pad: int = 5) -> str:
-        subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}
+    def row_repr(self, ind: int, length: int, next_length: int = -1, horizontal_pad: int = 5, center_symbol: str = 'Z') -> str:
+        subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}    # TODO: put this in a more global variable
+        unk = '�'
+        get_subscript = lambda n: subscript_numbers[n] if 0 <= n <= 9 else unk
         
         line = self.corner_repr(left=True, bottom=(0>=next_length))
         middle = '│'
@@ -112,13 +132,13 @@ class DoubleNestedHilbertScheme:
         for i in range(length):
             line += '─'*horizontal_pad
             line += self.corner_repr(right=(i==l-1), bottom=(i>=next_length))
-            middle += f" Z{subscript_numbers[ind+1]}{subscript_numbers[i+1]} │"
+            middle += f" {center_symbol}{get_subscript(ind+1)}{get_subscript(i+1)} │"
         for i in range(length, next_length):
             line += '─'*horizontal_pad
             line += self.corner_repr(right=(i==l-1), top=True)
         return "\n".join((middle, line))
 
-    def __repr__(self):
+    def __repr__(self, center_symbol: str = 'Z'):
         if len(self.diagram) == 0:
             return ""
         
@@ -132,22 +152,54 @@ class DoubleNestedHilbertScheme:
         top += "\n"
         s = "\n".join(
             [
-                self.row_repr(i, self.diagram[i], next_length(i), horizontal_pad=horizontal_pad)
+                self.row_repr(i, self.diagram[i], next_length(i), horizontal_pad=horizontal_pad, center_symbol=center_symbol)
                 for i in range(len(self.diagram))
             ]
         )
         return top + s
+    
+    def point_from_input(self) -> YoungDiagramIdeals:
+        subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}    # TODO: put this in a more global variable
+        unk = '�'
+        get_subscript = lambda n: subscript_numbers[n] if 0 <= n <= 9 else unk
+        set_global_scope(globals())
+        self.R._make_symbols_global_vars(verbose=False)
+        
+        print(self)
+        print(f"Input ideals of {self.R} corresponding to the Zᵢⱼ")
+
+        nested_ideals: List[List[PolyRingIdeal]] = []
+        for i, row_length in enumerate(self.diagram):
+            nested_ideals.append([])
+            for j in range(row_length):
+                gens = input(f"Generators of I{get_subscript(i+1)}{get_subscript(j+1)}: ")
+                I = eval(f"self.R.ideal({gens})")
+                nested_ideals[-1].append(I)
+        
+        revert_global_scope()
+        return YoungDiagramIdeals(self, nested_ideals, self.R)
+    
+    def point_from_ideal_list(self, nested_ideals: List[List[PolyRingIdeal]]) -> YoungDiagramIdeals:
+        diagram_ideals = YoungDiagramIdeals(self, nested_ideals, self.R)
+        return diagram_ideals
 
 
 class DoubleNestedHilbertSchemeTangentSpace:
-    def __init__(self, base: DoubleNestedHilbertScheme, nested_ideals: List[List[PolyRingIdeal]]):
+    def __init__(self, base: DoubleNestedHilbertScheme, diagram_ideals: YoungDiagramIdeals):
         """
         The shape of the nested_ideals list must coincide with the space's diagram
         """
+        if base.diagram != diagram_ideals.diagram:
+            raise ValueError
         self.base = base
-        self.diagram_ideals = YoungDiagramIdeals(self.base.diagram, nested_ideals)
+        self.diagram_ideals = diagram_ideals
         self.constraint_sizes: List[int] = []
         self.constraints = self._compute_constraints()
+    
+    @classmethod
+    def from_ideal_list(cls, base: DoubleNestedHilbertScheme, nested_ideals: List[List[PolyRingIdeal]]):
+        diagram_ideals = YoungDiagramIdeals(base, nested_ideals, base.R)
+        return cls(base, diagram_ideals)
     
     @staticmethod
     def _nested_hom_constraints(I1: PolyRingIdeal = None, I2: PolyRingIdeal = None) -> Tuple[np.ndarray, np.ndarray]:
@@ -246,12 +298,9 @@ class DoubleNestedHilbertSchemeTangentSpace:
                 C = self._kernel_constraint((i, j), (i+1, j))
                 column_constraints.append(C)
         
+        constraints = [morphism_constraints] + row_constraints + column_constraints
         C = np.concatenate(
-            [
-                morphism_constraints,
-                row_constraints,
-                column_constraints
-            ],
+            constraints,
             axis = 0
         )
         return C
