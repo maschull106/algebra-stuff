@@ -18,6 +18,8 @@ class PolyRing:
             else:
                 s_symbols = ",".join([f"x{i}" for i in range(1, n+1)])
             symbols = sympy.symbols(s_symbols)
+            if n == 1:
+                symbols = [symbols]
         self.symbols = symbols[: n]
         self.order = order
         focus_poly_ring(self)
@@ -63,6 +65,8 @@ class PolyRing:
 
 
 class PolyRingIdeal:
+    # TODO: bug: error when 0 is given as a generator
+    
     def __init__(self, base: PolyRing, gens: List[GroebnerPolynomial]):
         self.base = base
         self.symbols = base.symbols
@@ -87,7 +91,12 @@ class PolyRingIdeal:
     def contains_ideal(self, ideal: PolyRingIdeal) -> bool:
         return all(self.contains(f) for f in ideal.groebner_basis)
     
+    def is_whole_ring(self):
+        return len(self.groebner_basis) > 0 and self.groebner_basis[0] == 1
+    
     def has_max_radical(self) -> bool:
+        if self.is_whole_ring():
+            return True
         vars_represented = [False]*len(self.symbols)
         for f in self.groebner_basis:
             for i in range(len(self.symbols)):
@@ -289,6 +298,12 @@ class PolyRingIdeal:
                 p *= g
             return p
         gens = [prod(s) for s in choices(self.gens, d)]
+        return PolyRingIdeal(self.base, gens)
+    
+    def __mul__(self, other: PolyRingIdeal):
+        if self.base != other.base:
+            raise ValueError
+        gens = [f*g for f in self.gens for g in other.gens]
         return PolyRingIdeal(self.base, gens)
     
     def __truediv__(self, other: PolyRingIdeal) -> IdealQuotientModule:
