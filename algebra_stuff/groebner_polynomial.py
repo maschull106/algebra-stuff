@@ -104,6 +104,8 @@ class GroebnerPolynomial:
         return other
     
     def __eq__(self, other: GroebnerPolynomial) -> bool:
+        if not isinstance(other, GroebnerPolynomial):
+            other = GroebnerPolynomial.make(other, self.order, self.symbols)
         return self.monomials == other.monomials
     
     def __add__(self, other) -> GroebnerPolynomial:

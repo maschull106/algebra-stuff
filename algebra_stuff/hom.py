@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from .module import *
 import scipy
+import scipy.linalg
 
 
 class HomSpace:

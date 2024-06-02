@@ -12,6 +12,9 @@ class YoungDiagramIdeals:
             R = infer_poly_ring()
         self.R = R
         self.sanity_check()
+        self.degree = self._compute_degree()
+        self.socle = self._compute_socle()
+        self.subsocle = self._compute_subsocle()
     
     def sanity_check(self):
         if any(self.diagram[i+1] > self.diagram[i] for i in range(len(self.diagram)-1)):
@@ -28,6 +31,31 @@ class YoungDiagramIdeals:
             raise ValueError
         if not all(map(inclusion_constraint, self.columns())):
             raise ValueError
+    
+    def _compute_degree(self) -> np.ndarray:
+        max_length = len(self.row(0))
+        degree = -np.ones((len(self.rows()), max_length))
+        for i, row in enumerate(self.rows()):
+            for j, I in enumerate(row):
+                degree[i, j] = len(I.degree())
+        return degree
+
+    def _compute_socle(self) -> List[Tuple[int, int]]:
+        socle = []
+        rows = self.rows()
+        for i in range(len(rows)-1):
+            if len(rows[i+1]) < len(rows[i]):
+                socle.append((i, len(rows[i])-1))
+        socle.append((len(rows)-1, len(rows[-1])-1))
+        return socle
+    
+    def _compute_subsocle(self) -> List[Tuple[int, int]]:
+        subsocle = []
+        rows = self.rows()
+        for i in range(len(rows)-1):
+            if len(rows[i+1]) < len(rows[i]):
+                subsocle.append((i, len(rows[i+1])-1))
+        return subsocle
     
     def __getitem__(self, pos: Tuple[int, int]):
         """row i, column j"""
@@ -62,6 +90,10 @@ class YoungDiagramIdeals:
     def index_mapping(self, i: int, j: int) -> int:
         """convert index (i, j) to the corresponding index if all the rows were concatenated"""
         return sum(len(self.nested_ideals[k]) for k in range(i)) + j
+    
+    def dim_at(self):
+        """dimension of the Hilbert scheme at the point represented by this object"""
+        return sum(self.degree[ind] for ind in self.socle) - sum(self.degree[ind] for ind in self.subsocle)
     
     def __repr__(self):
         subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}    # TODO: put this in a more global variable
@@ -100,12 +132,19 @@ class DoubleNestedHilbertScheme:
         self.R = R
         self.diagram = diagram
     
-    def tangent_space(self, nested_ideals: Union[YoungDiagramIdeals, List[List[PolyRingIdeal]]]):
+    def dim_at(self, point: YoungDiagramIdeals) -> int:
+        return point.dim_at()
+    
+    def tangent_space(self, nested_ideals: Union[YoungDiagramIdeals, List[List[PolyRingIdeal]]]) -> DoubleNestedHilbertSchemeTangentSpace:
         if isinstance(nested_ideals, YoungDiagramIdeals):
             return DoubleNestedHilbertSchemeTangentSpace(self, nested_ideals)
         if isinstance(nested_ideals, list):
             return DoubleNestedHilbertSchemeTangentSpace.from_ideal_list(self, nested_ideals)
         raise TypeError
+    
+    def smooth_at(self, point: YoungDiagramIdeals) -> bool:
+        T = self.tangent_space(point)
+        return self.dim_at(point) == T.dim()
     
     @staticmethod
     def corner_repr(right: bool = False, left: bool = False, top: bool = False, bottom: bool = False):
@@ -157,7 +196,7 @@ class DoubleNestedHilbertScheme:
             ]
         )
         return top + s
-    
+
     def point_from_input(self) -> YoungDiagramIdeals:
         subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}    # TODO: put this in a more global variable
         unk = '�'
