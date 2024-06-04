@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, List, Dict, Callable
 from dataclasses import dataclass
 import time
 import random
+import numpy as np
 #import algebra_stuff as alg     # real import
 if TYPE_CHECKING:   # fake import, only for annotations
     from algebra_stuff import *
@@ -137,3 +138,8 @@ def revert_global_scope():
 
 
 GLOBALS = Globals()
+
+
+def filter_zero(C: np.ndarray):
+    """removes rows that only contain zeros from the array"""
+    return C[np.any(C, axis=1)]
