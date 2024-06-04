@@ -5,14 +5,72 @@ import scipy.linalg
 
 
 class HomSpace:
-    def __init__(self, M: ModuleFromIdeal, N: ModuleFromIdeal):
-        # TODO: make some sanity checks
+    def __init__(self, M: ModuleFromIdeal, N: ModuleFromIdeal, base: FiniteDimRing = None, precompute_constraints: bool = True):
+        # TODO: make some sanity checks (or try to convert modules to be over the given base)
         self.M = M
         self.N = N
-        self.ring = M.base_ring
+        if base is None:
+            base = M.base_ring
+        self.ring = base
+        if self.M.base_ring != self.ring:
+            self.M.set_base(self.ring)
+        if self.N.base_ring != self.ring:
+            self.N.set_base(self.ring)
+        
+        self.constraints_computed = False
+        if precompute_constraints:
+            self.constraints = self._compute_constraints()
+        else:
+            self.constraints = np.zeros((1, 1))
+        
+    @ExecTimes.track_time
+    def _compute_constraints(self) -> np.ndarray:
+        # give a matrix C such that for H a matrix k^m -> k^n,
+        # H represents a morphism of modules M -> N iff CH_ = 0,
+        # where H_ is a vectorized form of H (Hij = H_(i*m+j))
+        if not self.M.base_ring == self.N.base_ring:
+            raise TypeError("modules are not defined over the same ring")
+        
+        ExecTimes.time_step("get matrices of M")
+        m = self.M.dim
+        n = self.N.dim
+        k = self.ring.dim
+        FM = self.M.get_matrices_representation()
+        ExecTimes.time_step("get matrices of N")
+        FN = self.N.get_matrices_representation()
+        ExecTimes.time_step(f"init zero matrix of dim {n*m*k} x {n*m}")
+        C = np.zeros((n*m*k, n*m))
+        ExecTimes.time_step("fill the matrix with constraints")
+        for f_ind in range(k):
+            for i in range(n):
+                for j in range(m):
+                    ind = f_ind*n*m + i*m + j
+                    C[ind, i*m: i*m+m] += FM[f_ind][:, j]
+                    C[ind, j: n*m+j: m] -= FN[f_ind][i]
+        #C = C[np.any(C, axis=1)]    # filter out some useless constraints
+        C = filter_zero(C)
+        self.constraints_computed = True
+        return C
+    
+    def _get_constraints(self) -> np.ndarray:
+        if self.constraints_computed:
+            return self.constraints
+        self.constraints = self._compute_constraints()
+        return self.constraints
+    
+    def dim(self) -> int:
+        m = self.M.dim
+        n = self.N.dim
+        C = self._get_constraints()
+        return m*n - (np.linalg.matrix_rank(C) if C.size > 0 else 0)
+    
+    def basis(self) -> np.ndarray:
+        C = self._get_constraints()
+        basis = null_space(C)
+        return basis
     
     def get_matrix_representation(self, phi: Morphism):
-        # for a module morphism phi: M -> N, compute the matrix representation
+        """for a module morphism phi: M -> N, compute the matrix representation"""
         matrix = [self.N.to_basis(phi(f)) for f in self.M.basis]
         matrix = np.array(matrix).T
         return matrix
@@ -134,8 +192,8 @@ def nested_hom_constraints(I1: PolyRingIdeal=None, I2: PolyRingIdeal=None, neste
     # (C1 0)
     # (0 C1)
     # (C   )
-    phi = HomSpace(J2, J1).get_matrix_representation(lambda f: f)
-    psi = HomSpace(O2, O1).get_matrix_representation(lambda f: f)
+    phi = HomSpace(J2, J1, precompute_constraints=False).get_matrix_representation(lambda f: f)
+    psi = HomSpace(O2, O1, precompute_constraints=False).get_matrix_representation(lambda f: f)
     C = np.zeros((n1*m2, n1*m1 + n2*m2))
     for i in range(n1):
         for j in range(m2):

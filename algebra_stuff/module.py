@@ -17,6 +17,7 @@ class FiniteDimRing:
     
     @property
     def dim(self):
+        """dimension as a vector space"""
         return len(self.basis)
     
     def __eq__(self, other: FiniteDimRing):
@@ -59,6 +60,7 @@ class Module:
     
     @property
     def dim(self):
+        """dimension as a vector space"""
         return len(self.basis)
     
     def contains(self, f: GroebnerPolynomial) -> bool:
