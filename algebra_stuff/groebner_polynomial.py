@@ -176,4 +176,4 @@ class GroebnerPolynomial:
         return hash((monom_hash, coef_hash))
     
     def macaulay2_repr(self):
-        return "+".join(monom.macaulay2_repr for monom in self.monomials)
+        return "+".join(monom.macaulay2_repr() for monom in self.monomials)

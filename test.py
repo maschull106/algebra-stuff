@@ -180,18 +180,23 @@ class Macaulay2Prompt:
         finally:
             timeout_timer.cancel()
     
-    def readlines(self, timeout=0.5):
+    def readlines(self, timeout=0.5, expected=-1):
         lines = []
         while (line:=self.readline(timeout)) is not None:
             lines.append(line)
+            expected -= 1
+            if expected == 0:
+                return lines
+        # print("LENNNN:", len(lines))
+        # print(lines)
         return lines
 
-    def write(self, expr: str, timeout=0.5):
+    def write(self, expr: str, timeout=0.5, expect_output_count=-1):
         self.process.stdin.write(expr + '\n')
         self.process.stdin.flush()
         #output = self.process.stdout.readline()
         #stdout, stderr = self.process.communicate(input=expr + ';\n')
-        output = "\n".join(self.readlines(timeout))
+        output = "\n".join(self.readlines(timeout, expected=expect_output_count))
         return output
     
     def interact(self):
@@ -204,16 +209,16 @@ class Macaulay2Prompt:
 prompt = Macaulay2Prompt()
 
 
-def test_hom_rank(prompt: Macaulay2Prompt, I: PolyRingIdeal):
+def test_hom_rank(I: PolyRingIdeal, prompt: Macaulay2Prompt = prompt):
     R = I.base
     symbols = R.symbols
     base = "QQ"
-    m2_eqs = [f.macaulay2_repr for f in I.gens]
+    m2_eqs = [f.macaulay2_repr() for f in I.gens]
     ring_def = f"R = {base}[{','.join(map(repr, symbols))}]"
     ideal_def = f"I = ideal({','.join(m2_eqs)})"
     degree_comp = "degree Hom(I/I^2, R/I)"
     cmds = [ring_def, ideal_def, degree_comp]
-    out = prompt.write(";".join(cmds))
+    out = prompt.write(";".join(cmds), expect_output_count=-1)  # expected 5
     m2_deg = int(out.strip().split("=")[-1])
     my_deg = hom_rank(I/I**2, R/I)
     print("Macaulay2:", m2_deg)
@@ -224,7 +229,9 @@ def test_hom_rank(prompt: Macaulay2Prompt, I: PolyRingIdeal):
 def random_poly(R: PolyRing, degree: int, with_constant_term=False):
     pass
 def random_ideal(R: PolyRing):
-    pass
+    n_points = 5
+    for i in range(n_points):
+        pass
 
 
 H = DoubleNestedHilbertScheme([2,1,1], R)

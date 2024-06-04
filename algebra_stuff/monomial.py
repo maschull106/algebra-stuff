@@ -193,6 +193,7 @@ class MonomialWithCoef:
         if self.monomial.is_constant():
             return self.coef_repr()
         s_mon = self.monomial.macaulay2_repr()
-        s_coef = self.coef_repr()
+        #s_coef = self.coef_repr()
+        s_coef = str(int(self.coef))    # only works for integer coefs
         return s_coef + "*" + s_mon
         
