@@ -27,14 +27,17 @@ class HilbertSchemeTangentSpace:
         self.S = self.R//I  # all modules will be over this ring
         self.J = I/I**2
         self.O = self.R/I
+        self.hom_space = HomSpace(self.J, self.O, base=self.O)
     
     # TODO: precompute constraints
     
-    def constraints(self) -> np.ndarray:
-        return hom_constraints(self.J, self.O)
+    def _constraints(self) -> np.ndarray:
+        return self.hom_space._get_constraints()
     
     def dim(self) -> int:
-        return hom_rank(self.J, self.O, char=self.char)
+        return self.hom_space.dim()
+        #return hom_rank(self.J, self.O, char=self.char)
     
     def basis(self) -> np.ndarray:
-        return hom(self.J, self.O, char=self.char)
+        return self.hom_space.basis()
+        #return hom(self.J, self.O, char=self.char)

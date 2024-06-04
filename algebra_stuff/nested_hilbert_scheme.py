@@ -34,7 +34,7 @@ class YoungDiagramIdeals:
     
     def _compute_degree(self) -> np.ndarray:
         max_length = len(self.row(0))
-        degree = -np.ones((len(self.rows()), max_length))
+        degree = -np.ones((len(self.rows()), max_length), dtype=np.int16)
         for i, row in enumerate(self.rows()):
             for j, I in enumerate(row):
                 degree[i, j] = len(I.degree())
@@ -93,7 +93,8 @@ class YoungDiagramIdeals:
     
     def dim_at(self):
         """dimension of the Hilbert scheme at the point represented by this object"""
-        return sum(self.degree[ind] for ind in self.socle) - sum(self.degree[ind] for ind in self.subsocle)
+        d = sum(self.degree[ind] for ind in self.socle) - sum(self.degree[ind] for ind in self.subsocle)
+        return int(d)
     
     def __repr__(self):
         subscript_numbers = {0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉'}    # TODO: put this in a more global variable
@@ -255,8 +256,8 @@ class DoubleNestedHilbertSchemeTangentSpace:
         nested_modules = get_nested_modules(I1, I2)
         S, J1, J2, O1, O2 = nested_modules.components()
         k, m1, m2, n1, n2 = nested_modules.dims()
-        phi = HomSpace(J2, J1).get_matrix_representation(lambda f: f)
-        psi = HomSpace(O2, O1).get_matrix_representation(lambda f: f)
+        phi = HomSpace(J2, J1, precompute_constraints=False).get_matrix_representation(lambda f: f)
+        psi = HomSpace(O2, O1, precompute_constraints=False).get_matrix_representation(lambda f: f)
         C1 = np.zeros((n1*m2, n1*m1))
         C2 = np.zeros((n1*m2, n2*m2))
         for i in range(n1):
@@ -318,7 +319,7 @@ class DoubleNestedHilbertSchemeTangentSpace:
             ],
             axis=1
         )
-        filter_zero = lambda C: C[np.any(C, axis=1)]    # filter out some useless constraints
+        #filter_zero = lambda C: C[np.any(C, axis=1)]    # filter out some useless constraints
         C = filter_zero(C)
         return C
 
