@@ -43,6 +43,7 @@ class HomSpace:
         ExecTimes.time_step("fill the matrix with constraints")
         for f_ind in range(k):
             for i in range(n):
+                # TODO: try to get rid of one more for loop via numpy
                 for j in range(m):
                     ind = f_ind*n*m + i*m + j
                     C[ind, i*m: i*m+m] += FM[f_ind][:, j]
@@ -72,7 +73,7 @@ class HomSpace:
     def get_matrix_representation(self, phi: Morphism):
         """for a module morphism phi: M -> N, compute the matrix representation"""
         matrix = [self.N.to_basis(phi(f)) for f in self.M.basis]
-        matrix = np.array(matrix).T
+        matrix = np.array(matrix, dtype="float64").T
         return matrix
 
 

@@ -6,7 +6,9 @@ class HilbertScheme:
     Representing Hilb(Spec R)
     """
     
-    def __init__(self, R: PolyRing):
+    def __init__(self, R: PolyRing = None):
+        if R is None:
+            R = infer_poly_ring()
         self.R = R
     
     def tangent_space(self, I: PolyRingIdeal):
@@ -28,8 +30,6 @@ class HilbertSchemeTangentSpace:
         self.J = I/I**2
         self.O = self.R/I
         self.hom_space = HomSpace(self.J, self.O, base=self.O)
-    
-    # TODO: precompute constraints
     
     def _constraints(self) -> np.ndarray:
         return self.hom_space._get_constraints()

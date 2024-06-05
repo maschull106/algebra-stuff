@@ -69,13 +69,13 @@ class Module:
     def to_basis(self, f: GroebnerPolynomial) -> List[Scalar]:
         pass
     
-    def get_matrix_representation(self, phi: Morphism):
+    def get_matrix_representation(self, phi: Morphism) -> np.ndarray:
         # for phi an endomorphism on the module, compute the matrix representation
         matrix = [self.to_basis(phi(f)) for f in self.basis]
-        matrix = np.array(matrix).T
+        matrix = np.array(matrix, dtype="float64").T
         return matrix
     
-    def get_matrices_representation(self):
+    def get_matrices_representation(self) -> List[np.ndarray]:
         # for every g in the basis of the base ring, compute the matrix representation of the transformation induced by g
         return [self.get_matrix_representation(lambda f: g*f) for g in self.base_ring.basis]
     
@@ -107,12 +107,15 @@ class ModuleFromIdeal(Module):
         coefs = []
         for g in self.basis:
             c = 0
-            if f.lm.is_multiple(g.lm):
+            if f.lm == g.lm:
+            #if f.lm.is_multiple(g.lm):
                 c = f.lc/g.lc
                 f = f - c*g
             coefs.append(c)
         if not f.is_zero():
-            print("WTFFFF", orig_f, f)
+            #print("ERROR: NOT ZERO IN BASIS", orig_f, "  ||  ", f)
+            additional_coefs = self.to_basis(f)
+            coefs = list_add(coefs, additional_coefs)
         return coefs
 
 

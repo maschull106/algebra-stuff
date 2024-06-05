@@ -1,5 +1,6 @@
 from algebra_stuff import *
 import time
+import random
 
 
 def timer(f, *args):
@@ -213,14 +214,24 @@ def test_hom_rank(I: PolyRingIdeal, prompt: Macaulay2Prompt = prompt):
     R = I.base
     symbols = R.symbols
     base = "QQ"
-    m2_eqs = [f.macaulay2_repr() for f in I.gens]
+    m2_eqs = [f.macaulay2_repr() for f in I.groebner_basis]
     ring_def = f"R = {base}[{','.join(map(repr, symbols))}]"
     ideal_def = f"I = ideal({','.join(m2_eqs)})"
-    degree_comp = "degree Hom(I/I^2, R/I)"
+    #print("MACAULAY2 EQUATIONS: ", m2_eqs)
+    degree_comp = "degree Hom(I, R/I)"
     cmds = [ring_def, ideal_def, degree_comp]
-    out = prompt.write(";".join(cmds), expect_output_count=-1)  # expected 5
-    m2_deg = int(out.strip().split("=")[-1])
-    my_deg = hom_rank(I/I**2, R/I)
+    print("M2 start")
+    done = False
+    while not done:
+        try:
+            out = prompt.write(";".join(cmds), expect_output_count=-1)  # expected 5
+            m2_deg = int(out.strip().split("=")[-1])
+            done = True
+        except ValueError:
+            pass
+    print("M2 done")
+    #my_deg = hom_rank(I/I**2, R/I)
+    my_deg = HilbertScheme(R).tangent_space(I).dim()
     print("Macaulay2:", m2_deg)
     print("Computed:", my_deg)
     return m2_deg == my_deg
@@ -228,10 +239,55 @@ def test_hom_rank(I: PolyRingIdeal, prompt: Macaulay2Prompt = prompt):
 
 def random_poly(R: PolyRing, degree: int, with_constant_term=False):
     pass
-def random_ideal(R: PolyRing):
-    n_points = 5
-    for i in range(n_points):
-        pass
-
+def random_ideal(R: PolyRing = None):
+    if R is None:
+        R = infer_poly_ring()
+    n_points = 3
+    symbols = R.symbols
+    I = R.ideal(1)
+    for _ in range(n_points):
+        p = [random.randint(0, 3) for _ in range(len(symbols))]
+        I *= R.ideal(*[symb-a for symb, a in zip(symbols, p)])
+    return I
 
 H = DoubleNestedHilbertScheme([2,1,1], R)
+
+
+def unit_test_hom_rank(n):
+    for _ in range(n):
+        J = random_ideal()
+        print(J)
+        print()
+        if not test_hom_rank(J):
+            print("ERRORRRRRRRRRRRRRRRRRRR")
+        print("\n\n\n\n")
+
+
+@ExecTimes.track_time
+def speed_test(mode):
+    prev_mode = Scalar.MODE
+    try:
+        focused_poly_ring = infer_poly_ring()
+    except:
+        focused_poly_ring = None
+    try:
+        focused_base_ring = infer_base_ring()
+    except:
+        focused_base_ring = None
+    Scalar.MODE = mode
+    R = PolyRing(n=3)
+    ExecTimes.time_step("ideal def")
+    I = R.ideal(x**2, x*y**2, x*y*z, x*z**2, y**2*z**2, y*z**3, z**4, y**3-x*z)
+    ExecTimes.time_step("tangent space def")
+    T = HilbertScheme(R).tangent_space(I)
+    ExecTimes.time_step("dimension computation")
+    if T.dim() != 45:
+        raise ValueError
+    Scalar.MODE = prev_mode
+    if focused_poly_ring is not None:
+        focus_poly_ring(focused_poly_ring)
+    if focused_base_ring is not None:
+        focus_base_ring(focused_base_ring)
+
+
+I = ideal(y**2-2*y,y*z-3*y,z**2+Fraction(-3, 2)*y-2*z,x+Fraction(-1, 4)*y+Fraction(-1, 2)*z)

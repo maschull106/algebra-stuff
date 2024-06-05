@@ -75,9 +75,13 @@ class PolyRingIdeal:
         self.groebner_basis: List[GroebnerPolynomial] = None
         self._compute_groebner_basis()
     
+    @ExecTimes.track_time
     def _compute_groebner_basis(self):
+        ExecTimes.time_step("buchberger algo")
         self.groebner_basis = self.buchberger_algo(self.gens)
+        ExecTimes.time_step("basis reduce")
         self.groebner_basis = self.basis_reduce(self.groebner_basis)
+        ExecTimes.time_step("basis sort")
         self.groebner_basis = self.sort_list(self.groebner_basis)
     
     def sort_list(self, l: List[GroebnerPolynomial]) -> List[GroebnerPolynomial]:
@@ -172,7 +176,7 @@ class PolyRingIdeal:
                 f = f - c*g
             coefs.append(c)
         if not f.is_zero():
-            print("WTFFFF", f)
+            print("NOT REDUCED ERROR", f)
         return coefs
     
     def quotient_square_representation_matrix(self, g):
@@ -180,7 +184,7 @@ class PolyRingIdeal:
     
     def __repr__(self):
         sep = ", " if Params.verbose else ","
-        s = f"<{sep.join(map(repr, self.gens))}>"
+        s = f"<{sep.join(map(repr, self.groebner_basis))}>"
         if len(s) > Params.long:
             return "[long ideal]"
         return s
@@ -252,7 +256,7 @@ class PolyRingIdeal:
                     PolyRingIdeal.buchberger_step(f, g, G, next_new)
             done = len(next_new) == 0
             old = G
-            new = next_new
+            new = list(set(next_new))
         return G
     
     @staticmethod
@@ -297,13 +301,14 @@ class PolyRingIdeal:
             for g in set:
                 p *= g
             return p
-        gens = [prod(s) for s in choices(self.gens, d)]
+        gens = [prod(s) for s in choices(self.groebner_basis, d)]
         return PolyRingIdeal(self.base, gens)
     
     def __mul__(self, other: PolyRingIdeal):
         if self.base != other.base:
             raise ValueError
-        gens = [f*g for f in self.gens for g in other.gens]
+        #gens = [f*g for f in self.gens for g in other.gens]
+        gens = [f*g for f in self.groebner_basis for g in other.groebner_basis]
         return PolyRingIdeal(self.base, gens)
     
     def __truediv__(self, other: PolyRingIdeal) -> IdealQuotientModule:
@@ -312,6 +317,10 @@ class PolyRingIdeal:
             raise TypeError
         base_ring = infer_base_ring()
         return module.IdealQuotientModule(base_ring, top_ideal=self, bot_ideal=other)
+    
+    def macaulay2_repr(self):
+        m2_eqs = [f.macaulay2_repr() for f in self.groebner_basis]
+        return f"I = ideal({','.join(m2_eqs)})"
     
 
 def choices(S, size, start_index=0, current_choices=None):
