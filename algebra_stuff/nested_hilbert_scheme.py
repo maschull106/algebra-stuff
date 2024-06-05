@@ -134,6 +134,8 @@ class DoubleNestedHilbertScheme:
         self.diagram = diagram
     
     def dim_at(self, point: YoungDiagramIdeals) -> int:
+        if self.R.n > 1:
+            raise NotImplementedError("dimension of Nested Hilbert Scheme of Points is only implemented for curves")
         return point.dim_at()
     
     def tangent_space(self, nested_ideals: Union[YoungDiagramIdeals, List[List[PolyRingIdeal]]]) -> DoubleNestedHilbertSchemeTangentSpace:
@@ -172,7 +174,7 @@ class DoubleNestedHilbertScheme:
         for i in range(length):
             line += '─'*horizontal_pad
             line += self.corner_repr(right=(i==l-1), bottom=(i>=next_length))
-            middle += f" {center_symbol}{get_subscript(ind+1)}{get_subscript(i+1)} │"
+            middle += f" {center_symbol}{get_subscript(ind)}{get_subscript(i)} │"
         for i in range(length, next_length):
             line += '─'*horizontal_pad
             line += self.corner_repr(right=(i==l-1), top=True)
@@ -212,7 +214,7 @@ class DoubleNestedHilbertScheme:
         for i, row_length in enumerate(self.diagram):
             nested_ideals.append([])
             for j in range(row_length):
-                gens = input(f"Generators of I{get_subscript(i+1)}{get_subscript(j+1)}: ")
+                gens = input(f"Generators of I{get_subscript(i)}{get_subscript(j)}: ")
                 I = eval(f"self.R.ideal({gens})")
                 nested_ideals[-1].append(I)
         
@@ -283,7 +285,7 @@ class DoubleNestedHilbertSchemeTangentSpace:
         """
         morphism_constraints = []
         for I in self.diagram_ideals:
-            C = HilbertScheme(self.base.R).tangent_space(I).constraints()
+            C = HilbertScheme(self.base.R).tangent_space(I)._constraints()
             morphism_constraints.append(C)
             size = C.shape[1]
             self.constraint_sizes.append(size)
