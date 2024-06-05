@@ -1,5 +1,6 @@
 from __future__ import annotations
 from sympy import Symbol
+import sympy
 from typing import TYPE_CHECKING, List, Union
 from fractions import Fraction
 import algebra_stuff.groebner_polynomial as gb  # real import
@@ -54,16 +55,15 @@ class Scalar:
     FLOAT = 0
     COMPLEX = 1
     FRACTION = 2
-    MODE = FRACTION
-    TYPES = (int, float, complex, Fraction)
-    # TODO
+    MODE = FLOAT
+    TYPES = (int, float, complex, Fraction, sympy.Float, sympy.Integer, sympy.core.numbers.One, sympy.core.numbers.Zero)
+
     @staticmethod
     def make(t):
         #t = t[0]
         if Scalar.MODE == Scalar.FLOAT:
             return t
         if Scalar.MODE == Scalar.FRACTION:
-            import sympy
             if isinstance(t, sympy.Float):
                 t = float(t)
             return Fraction(t)
@@ -104,6 +104,7 @@ class Monomial:
             return other * self
         if isinstance(other, Scalar.TYPES):
             return MonomialWithCoef(other, self)
+        print("Encountered unexpected type in multiplication:", other, type(other))
         raise TypeError
     
     def __rmul__(self, other):

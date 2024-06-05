@@ -44,37 +44,41 @@ class GroebnerPolynomial:
             if not set(p_symbols).issubset(set(symbols)):
                 raise ValueError("encountered unknown symbols")
             symbol2index = {s: i for i, s in enumerate(symbols)}
-            # for i in range(len(terms)):
-            #     expr, (coef, degrees, _) = terms[i]
-            #     new_degrees = [0]*len(symbols)
-            #     for s, d in zip(p_symbols, degrees):
-            #         new_degrees[symbol2index[s]] = d
-            #     terms[i] = (expr, (coef, tuple(new_degrees), _))
-            for i in range(len(poly_terms)):
-                degrees, coef = poly_terms[i]
-                new_degrees = [0]*len(symbols)
-                for s, d in zip(p_symbols, degrees):
-                    new_degrees[symbol2index[s]] = d
-                poly_terms[i] = (new_degrees, coef)
+            if Scalar.MODE == Scalar.FRACTION:
+                for i in range(len(poly_terms)):
+                    degrees, coef = poly_terms[i]
+                    new_degrees = [0]*len(symbols)
+                    for s, d in zip(p_symbols, degrees):
+                        new_degrees[symbol2index[s]] = d
+                    poly_terms[i] = (new_degrees, coef)
+            else:
+                for i in range(len(terms)):
+                    expr, (coef, degrees, _) = terms[i]
+                    new_degrees = [0]*len(symbols)
+                    for s, d in zip(p_symbols, degrees):
+                        new_degrees[symbol2index[s]] = d
+                    terms[i] = (expr, (coef, tuple(new_degrees), _))
             
-        # monomials = [
-        #     MonomialWithCoef(
-        #         coef=Scalar.make(t[1][0]),
-        #         monomial=Monomial(symbols, list(t[1][1]))
-        #     )
-        #     for t in terms
-        # ]
-        try:
+        if Scalar.MODE == Scalar.FRACTION:
+            try:
+                monomials = [
+                    MonomialWithCoef(
+                        coef=Scalar.make(t[1]),
+                        monomial=Monomial(symbols, list(t[0]))
+                    )
+                    for t in poly_terms
+                ]
+            except:
+                print("Poly:", orig_poly, type(orig_poly))
+                raise
+        else:
             monomials = [
                 MonomialWithCoef(
-                    coef=Scalar.make(t[1]),
-                    monomial=Monomial(symbols, list(t[0]))
+                    coef=Scalar.make(t[1][0][0]),
+                    monomial=Monomial(symbols, list(t[1][1]))
                 )
-                for t in poly_terms
+                for t in terms
             ]
-        except:
-            print("Poly:", orig_poly, type(orig_poly))
-            raise
         return cls(monomials, symbols, order)
     
     def _leading(self) -> MonomialWithCoef:
