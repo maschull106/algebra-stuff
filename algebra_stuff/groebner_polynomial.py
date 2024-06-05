@@ -12,6 +12,7 @@ class GroebnerPolynomial:
     
     @classmethod
     def make(cls, poly: Union[GroebnerPolynomial, sympy.Expr, Scalar], order: MonomialOrder = degrevlex, symbols: List[Symbol] = None) -> GroebnerPolynomial:
+        orig_poly = poly
         if isinstance(poly, cls):
             return poly
         elif isinstance(poly, MonomialWithCoef):
@@ -26,28 +27,54 @@ class GroebnerPolynomial:
             poly = sympy.Float(poly)
         elif isinstance(poly, complex):
             poly = poly.real + poly.imag*sympy.I
+        elif isinstance(poly, Fraction):
+            poly = sympy.Rational(poly)
         poly = poly.expand()
         terms, p_symbols = poly.as_terms()
+        try:
+            poly_terms = poly.as_poly().terms()
+        except:
+            # if poly is constant, force it to sympy polynomial
+            symb = p_symbols if symbols is None else symbols
+            temp = symb[0].as_poly()
+            poly_terms = (poly + temp - temp).terms()
         if symbols is None:
             symbols = p_symbols
         else:
             if not set(p_symbols).issubset(set(symbols)):
                 raise ValueError("encountered unknown symbols")
             symbol2index = {s: i for i, s in enumerate(symbols)}
-            for i in range(len(terms)):
-                expr, (coef, degrees, _) = terms[i]
+            # for i in range(len(terms)):
+            #     expr, (coef, degrees, _) = terms[i]
+            #     new_degrees = [0]*len(symbols)
+            #     for s, d in zip(p_symbols, degrees):
+            #         new_degrees[symbol2index[s]] = d
+            #     terms[i] = (expr, (coef, tuple(new_degrees), _))
+            for i in range(len(poly_terms)):
+                degrees, coef = poly_terms[i]
                 new_degrees = [0]*len(symbols)
                 for s, d in zip(p_symbols, degrees):
                     new_degrees[symbol2index[s]] = d
-                terms[i] = (expr, (coef, tuple(new_degrees), _))
+                poly_terms[i] = (new_degrees, coef)
             
-        monomials = [
-            MonomialWithCoef(
-                coef=Scalar.make(t[1][0]),
-                monomial=Monomial(symbols, list(t[1][1]))
-            )
-            for t in terms
-        ]
+        # monomials = [
+        #     MonomialWithCoef(
+        #         coef=Scalar.make(t[1][0]),
+        #         monomial=Monomial(symbols, list(t[1][1]))
+        #     )
+        #     for t in terms
+        # ]
+        try:
+            monomials = [
+                MonomialWithCoef(
+                    coef=Scalar.make(t[1]),
+                    monomial=Monomial(symbols, list(t[0]))
+                )
+                for t in poly_terms
+            ]
+        except:
+            print("Poly:", orig_poly, type(orig_poly))
+            raise
         return cls(monomials, symbols, order)
     
     def _leading(self) -> MonomialWithCoef:
@@ -125,7 +152,11 @@ class GroebnerPolynomial:
         return self.__add__(-other)
     
     def __mul__(self, other):
-        other = self._make_and_check(other)
+        try:
+            other = self._make_and_check(other)
+        except:
+            print("MUL:", other, type(other))
+            raise
         monomials = [m1*m2 for m1 in self.monomials for m2 in other.monomials]
         monomials = self._monom_arrange(monomials)
         return GroebnerPolynomial(monomials, self.symbols, self.order)
@@ -134,17 +165,17 @@ class GroebnerPolynomial:
         return self * other
     
     def __truediv__(self, other: Scalar):
-        if isinstance(other, (int, float, complex)):
+        if isinstance(other, Scalar.TYPES):
             return GroebnerPolynomial([m / other for m in self.monomials], self.symbols, self.order)
         raise TypeError
     
     def __len__(self):
         return len(self.monomials)
     
-    def is_zero(self) -> bool:
-        if len(self.monomials) > 0 and all(m.coef == 0 for m in self.monomials):
+    def is_zero(self, tol: float = 1e-12) -> bool:
+        if len(self.monomials) > 0 and all(abs(m.coef) <= tol for m in self.monomials):
             if len(self.monomials) > 1:
-                print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+                print("Warning: unprecise computation")
             return True
         return len(self.monomials) == 0
     

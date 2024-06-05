@@ -1,11 +1,12 @@
 from __future__ import annotations
 from sympy import Symbol
 from typing import TYPE_CHECKING, List, Union
+from fractions import Fraction
 import algebra_stuff.groebner_polynomial as gb  # real import
 if TYPE_CHECKING:   # fake import, only for annotations
     from .groebner_polynomial import GroebnerPolynomial
 #from .common import *
-from .common import Params, ExecTimes, init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope, revert_global_scope, filter_zero
+from .common import Params, ExecTimes, init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope, revert_global_scope, filter_zero, list_add
 
 # class GroebnerPolynomial:
 #     def __new__(self, *args, **kwargs):
@@ -50,11 +51,27 @@ def base_decomp(n: int, b: int = 10, descending_order: bool = True):
 
 
 class Scalar:
+    FLOAT = 0
+    COMPLEX = 1
+    FRACTION = 2
+    MODE = FRACTION
+    TYPES = (int, float, complex, Fraction)
     # TODO
     @staticmethod
     def make(t):
-        return t[0]
-        return t[0] + 1j*t[1]
+        #t = t[0]
+        if Scalar.MODE == Scalar.FLOAT:
+            return t
+        if Scalar.MODE == Scalar.FRACTION:
+            import sympy
+            if isinstance(t, sympy.Float):
+                t = float(t)
+            return Fraction(t)
+        if Scalar.MODE == Scalar.COMPLEX:
+            print("Warning: COMPLEX scalar mode not 100% functional")
+            return t
+            return t[0] + 1j*t[1]
+        raise ValueError
     
     
 class Monomial:
@@ -85,7 +102,7 @@ class Monomial:
             return MonomialWithCoef(coef=1, monomial=self) * other
         if isinstance(other, gb.GroebnerPolynomial):
             return other * self
-        if isinstance(other, (int, float, complex)):
+        if isinstance(other, Scalar.TYPES):
             return MonomialWithCoef(other, self)
         raise TypeError
     
@@ -160,7 +177,7 @@ class MonomialWithCoef:
             return MonomialWithCoef(self.coef/other.coef, self.monomial/other.monomial)
         if isinstance(other, Monomial):
             return MonomialWithCoef(self.coef, self.monomial/other)
-        if isinstance(other, (float, int, complex)):
+        if isinstance(other, Scalar.TYPES):
             return MonomialWithCoef(self.coef/other, self.monomial)
         raise TypeError
     
@@ -176,6 +193,8 @@ class MonomialWithCoef:
                 else:
                     s_coef = repr(self.coef.real)
             elif isinstance(self.coef, float) and self.coef.is_integer():
+                s_coef = repr(int(self.coef))
+            elif isinstance(self.coef, Fraction) and self.coef.as_integer_ratio()[1] == 1:
                 s_coef = repr(int(self.coef))
             else:
                 s_coef = repr(self.coef)
@@ -194,6 +213,8 @@ class MonomialWithCoef:
             return self.coef_repr()
         s_mon = self.monomial.macaulay2_repr()
         #s_coef = self.coef_repr()
-        s_coef = str(int(self.coef))    # only works for integer coefs
+        #s_coef = str(int(self.coef))    # only works for integer coefs
+        n, d = Fraction(self.coef).as_integer_ratio()
+        s_coef = str(n) + "/" + str(d)
         return s_coef + "*" + s_mon
         

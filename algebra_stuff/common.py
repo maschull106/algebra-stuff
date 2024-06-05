@@ -11,7 +11,7 @@ if TYPE_CHECKING:   # fake import, only for annotations
 
 class Params:
     verbose = False
-    long = 80
+    long = 120
     focus_on_display = False
 
 
@@ -143,3 +143,7 @@ GLOBALS = Globals()
 def filter_zero(C: np.ndarray):
     """removes rows that only contain zeros from the array"""
     return C[np.any(C, axis=1)]
+
+
+def list_add(l1: list, l2: list):
+    return [a+b for a, b in zip(l1, l2)]
