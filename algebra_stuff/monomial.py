@@ -7,7 +7,7 @@ import algebra_stuff.groebner_polynomial as gb  # real import
 if TYPE_CHECKING:   # fake import, only for annotations
     from .groebner_polynomial import GroebnerPolynomial
 #from .common import *
-from .common import Params, ExecTimes, init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope, revert_global_scope, filter_zero, list_add
+from .common import Params, ExecTimes, init_globals, focus_poly_ring, focus_base_ring, infer_poly_ring, infer_base_ring, get_global_scope, set_global_scope, revert_global_scope, filter_zero, list_add, null_space, exact_null_space, decide_dtype
 
 # class GroebnerPolynomial:
 #     def __new__(self, *args, **kwargs):

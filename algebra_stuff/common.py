@@ -4,6 +4,9 @@ from dataclasses import dataclass
 import time
 import random
 import numpy as np
+import scipy
+import sympy
+from fractions import Fraction
 #import algebra_stuff as alg     # real import
 if TYPE_CHECKING:   # fake import, only for annotations
     from algebra_stuff import *
@@ -142,8 +145,59 @@ GLOBALS = Globals()
 
 def filter_zero(C: np.ndarray):
     """removes rows that only contain zeros from the array"""
-    return C[np.any(C, axis=1)]
+    if C.size == 0:
+        return C
+    try:
+        return C[np.any(C, axis=1)]
+    except:
+        return C[np.any(C != 0, axis=1)]
 
 
 def list_add(l1: list, l2: list):
     return [a+b for a, b in zip(l1, l2)]
+
+
+def gaussian_elimination(A: np.ndarray, inplace=True):
+    """put matrix A in column echelon form"""
+    if not inplace:
+        A = np.copy(A)
+    n, m = A.shape
+    limit = min(m, n)
+    ech_col = 0
+    for i in range(limit):
+        if A[i, ech_col] == 0:
+            nonzeros = np.where(A[i] != 0)[0]
+            if nonzeros.size == 0:
+                continue
+            j = nonzeros[0]
+            A[:, [ech_col, j]] = A[:, [j, ech_col]]
+        c = A[i, ech_col]
+        for j in range(m):
+            if j != ech_col:
+                d = A[i, j]
+                A[: j] -= d/c * A[:, ech_col]
+    
+    return A
+
+
+def null_space(A: np.ndarray) -> np.ndarray:
+    # TODO: make sure this is equivalent to just scipy.linalg.null_space(A)
+    # just scipy.linalg.null_space(A) works but seems to be way slower for A with nb of rows (a lot) bigger than number of columns
+    P, L, U = scipy.linalg.lu(A)
+    basis = scipy.linalg.null_space(U)
+    return basis
+
+
+def exact_null_space(A: np.ndarray) -> np.ndarray:
+    n, m = A.shape
+    A = np.concatenate([A, np.eye(m, dtype=decide_dtype(use_scipy=False))], axis=0)
+    A = A + Fraction()  # force fraction if possible
+    M = sympy.Matrix(A)
+    M = ((M.T).echelon_form()).T
+    M = np.array(M)
+    basis = M[:,np.where(np.all(M[:n]==0, axis=0))[0]][n:]
+    return basis
+
+
+def decide_dtype(use_scipy: bool = True):
+    return "float64" if use_scipy else "object"
