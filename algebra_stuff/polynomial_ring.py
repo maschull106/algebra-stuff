@@ -113,7 +113,8 @@ class PolyRingIdeal:
     def degree(self) -> List[GroebnerPolynomial]:
         # TODO: find better name for this function + combine with degree_for_base function
         if not self.has_max_radical():
-            return float("inf")
+            raise ValueError("the ideal does not have finite finite colength")
+
         def is_multiple(mon_degrees):
             monomial = Monomial(self.symbols, mon_degrees)
             for f in self.groebner_basis:
@@ -142,7 +143,7 @@ class PolyRingIdeal:
     
     def degree_for_base(self, base_ideal: PolyRingIdeal) -> List[GroebnerPolynomial]:
         if not self.has_max_radical():
-            return float("inf")
+            raise ValueError("the ideal does not have finite finite colength")
         
         def is_mutliple(poly: GroebnerPolynomial):
             for f in self.groebner_basis:

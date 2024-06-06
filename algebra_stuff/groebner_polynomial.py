@@ -8,6 +8,9 @@ class GroebnerPolynomial:
     def __init__(self, monomials: List[MonomialWithCoef], symbols: List[Symbol], order: MonomialOrder):
         self.order = order
         self.monomials = self._monom_sort(copy.deepcopy(monomials))
+        if Scalar.MODE == Scalar.FRACTION:
+            for mon in self.monomials:
+                mon.coef = Scalar.make(mon.coef)
         self.symbols = symbols
     
     @classmethod
@@ -83,7 +86,7 @@ class GroebnerPolynomial:
     
     def _leading(self) -> MonomialWithCoef:
         if self.is_zero():
-            return MonomialWithCoef(0, Monomial(self.symbols, []))
+            return MonomialWithCoef(Scalar.make(0), Monomial(self.symbols, []))
         return self.monomials[0]
     
     def get_coef(self, i: int) -> Scalar:
@@ -111,6 +114,7 @@ class GroebnerPolynomial:
     def _monom_collapse(self, monomials: List[MonomialWithCoef]) -> List[MonomialWithCoef]:
         # does not work in place
         monomials = copy.deepcopy(monomials)
+        monomials = [mon for mon in monomials if mon.coef != 0]
         i = 0
         while i < len(monomials):
             j = i+1
@@ -179,7 +183,7 @@ class GroebnerPolynomial:
     def is_zero(self, tol: float = 1e-12) -> bool:
         if len(self.monomials) > 0 and all(abs(m.coef) <= tol for m in self.monomials):
             if len(self.monomials) > 1:
-                print("Warning: unprecise computation")
+                print("Warning: probably unprecise computation")
             return True
         return len(self.monomials) == 0
     
