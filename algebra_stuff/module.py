@@ -8,7 +8,9 @@ Morphism = Callable[[GroebnerPolynomial], GroebnerPolynomial]
 
 
 class FiniteDimRing:
-    def __init__(self):
+    def __init__(self, order: MonomialOrder = degrevlex, symbols: List[Symbol] = None):
+        self.order = order
+        self.symbols = symbols
         self.basis = self._get_basis()
         focus_base_ring(self)
     
@@ -27,7 +29,7 @@ class FiniteDimRing:
 class QuotientRing(FiniteDimRing):
     def __init__(self, ideal: PolyRingIdeal):
         self.ideal = ideal
-        super().__init__()
+        super().__init__(ideal.order, ideal.symbols)
     
     def _get_basis(self) -> List[GroebnerPolynomial]:
         return self.ideal.degree()
@@ -66,18 +68,26 @@ class Module:
     def contains(self, f: GroebnerPolynomial) -> bool:
         return False
     
+    def random_element(self) -> GroebnerPolynomial:
+        coefs = [np.random.randint(-5, 5) for _ in range(self.dim)]
+        return self.from_basis(coefs)
+    
     def to_basis(self, f: GroebnerPolynomial) -> List[Scalar]:
         pass
     
-    def get_matrix_representation(self, phi: Morphism) -> np.ndarray:
+    def from_basis(self, vect: List[Scalar]) -> GroebnerPolynomial:
+        zero = GroebnerPolynomial.make(0, order=self.base_ring.order, symbols=self.base_ring.symbols)
+        return sum((c*g for c, g in zip(vect, self.basis)), start=zero)
+    
+    def get_matrix_representation(self, phi: Morphism, dtype="float64") -> np.ndarray:
         # for phi an endomorphism on the module, compute the matrix representation
         matrix = [self.to_basis(phi(f)) for f in self.basis]
-        matrix = np.array(matrix, dtype="float64").T
+        matrix = np.array(matrix, dtype=dtype).T
         return matrix
     
-    def get_matrices_representation(self) -> List[np.ndarray]:
+    def get_matrices_representation(self, dtype="float64") -> List[np.ndarray]:
         # for every g in the basis of the base ring, compute the matrix representation of the transformation induced by g
-        return [self.get_matrix_representation(lambda f: g*f) for g in self.base_ring.basis]
+        return [self.get_matrix_representation(lambda f: g*f, dtype=dtype) for g in self.base_ring.basis]
     
     def construct_endo_matrix(self):
         n = len(self.basis)
@@ -113,7 +123,7 @@ class ModuleFromIdeal(Module):
                 f = f - c*g
             coefs.append(c)
         if not f.is_zero():
-            #print("ERROR: NOT ZERO IN BASIS", orig_f, "  ||  ", f)
+            print("ERROR: NOT ZERO IN BASIS", orig_f, "  ||  ", f)
             additional_coefs = self.to_basis(f)
             coefs = list_add(coefs, additional_coefs)
         return coefs
@@ -150,7 +160,7 @@ class IdealQuotientModule(ModuleFromIdeal):
     def _get_basis(self) -> List[GroebnerPolynomial]:
         return self.structure_ideal.degree_for_base(base_ideal=self.top_ideal)
     
-    def contain(self, f: GroebnerPolynomial) -> bool:
+    def contains(self, f: GroebnerPolynomial) -> bool:
         return self.top_ideal.contains(f)
     
     def __repr__(self):
