@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from .module import *
 import scipy
@@ -5,10 +6,12 @@ import scipy.linalg
 
 
 class HomSpace:
-    def __init__(self, M: ModuleFromIdeal, N: ModuleFromIdeal, base: FiniteDimRing = None, precompute_constraints: bool = True):
+    def __init__(self, M: Module, N: Module, base: FiniteDimRing = None, precompute_constraints: bool = True, use_scipy: bool = True):
         # TODO: make some sanity checks (or try to convert modules to be over the given base)
         self.M = M
         self.N = N
+        self.use_scipy = use_scipy #or Scalar.MODE != Scalar.FRACTION
+        self.dtype = decide_dtype(self.use_scipy)
         if base is None:
             base = M.base_ring
         self.ring = base
@@ -21,8 +24,14 @@ class HomSpace:
         if precompute_constraints:
             self.constraints = self._compute_constraints()
         else:
-            self.constraints = np.zeros((1, 1))
-        
+            self.constraints = np.zeros((1, 1), dtype=self.dtype)
+    
+    def domain(self) -> Module:
+        return self.M
+    
+    def codomain(self) -> Module:
+        return self.N
+    
     @ExecTimes.track_time
     def _compute_constraints(self) -> np.ndarray:
         # give a matrix C such that for H a matrix k^m -> k^n,
@@ -35,11 +44,12 @@ class HomSpace:
         m = self.M.dim
         n = self.N.dim
         k = self.ring.dim
-        FM = self.M.get_matrices_representation()
+        FM = self.M.get_matrices_representation(dtype=self.dtype)
         ExecTimes.time_step("get matrices of N")
-        FN = self.N.get_matrices_representation()
+        FN = self.N.get_matrices_representation(dtype=self.dtype)
         ExecTimes.time_step(f"init zero matrix of dim {n*m*k} x {n*m}")
-        C = np.zeros((n*m*k, n*m))
+        C = np.zeros((n*m*k, n*m), dtype=self.dtype)
+        CCC = np.copy(C)
         ExecTimes.time_step("fill the matrix with constraints")
         for f_ind in range(k):
             for i in range(n):
@@ -63,18 +73,67 @@ class HomSpace:
         m = self.M.dim
         n = self.N.dim
         C = self._get_constraints()
-        return m*n - (np.linalg.matrix_rank(C) if C.size > 0 else 0)
+        C = C if self.use_scipy else C.astype("float64")
+        rank = (np.linalg.matrix_rank(C) if C.size > 0 else 0)
+        return m*n - rank
     
     def basis(self) -> np.ndarray:
         C = self._get_constraints()
-        basis = null_space(C)
+        if self.use_scipy:
+            basis = null_space(C)
+        else:
+            basis = exact_null_space(C)
+            if Scalar.MODE != Scalar.FRACTION:
+                basis = basis.astype("float64")
         return basis
+    
+    def basis_as_matrices(self) -> List[np.ndarray]:
+        basis = self.basis()
+        m = self.M.dim
+        n = self.N.dim
+        basis_list = []
+        for vect in basis.T:
+            vect = vect.reshape((n, m))
+            basis_list.append(vect)
+        return basis_list
+    
+    def basis_as_morphisms(self) -> List[MorphismFromMatrix]:
+        basis = self.basis_as_matrices()
+        return [MorphismFromMatrix(self.M, self.N, matrix) for matrix in basis]
+    
+    def apply_morphism(self, phi: np.ndarray, f: GroebnerPolynomial):
+        """apply a morphism phi given in matrix form to the element f"""
+        vect = self.M.to_basis(f)
+        vect = np.array(vect)
+        res = phi @ vect
+        return self.N.from_basis(res)
     
     def get_matrix_representation(self, phi: Morphism):
         """for a module morphism phi: M -> N, compute the matrix representation"""
         matrix = [self.N.to_basis(phi(f)) for f in self.M.basis]
-        matrix = np.array(matrix, dtype="float64").T
+        matrix = np.array(matrix, dtype=self.dtype).T
         return matrix
+
+
+class MorphismFromMatrix:
+    def __init__(self, M: Module, N: Module, matrix: np.ndarray):
+        self.M = M
+        self.N = N
+        self.matrix = matrix
+    
+    def domain(self) -> Module:
+        return self.M
+    
+    def codomain(self) -> Module:
+        return self.N
+    
+    def __call__(self, f: GroebnerPolynomial):
+        if not self.M.contains(f):
+            raise ValueError
+        vect = self.M.to_basis(f)
+        vect = np.array(vect)
+        res = self.matrix @ vect
+        return self.N.from_basis(res)
 
 
 def hom_complexity(M: ModuleFromIdeal, N: ModuleFromIdeal):
@@ -131,14 +190,6 @@ def hom_rank(M: ModuleFromIdeal, N: ModuleFromIdeal, tol: float = None, char: in
         C %= char
     ExecTimes.time_step("calculate rank")
     return m*n - (np.linalg.matrix_rank(C, tol=tol) if C.size > 0 else 0)
-
-
-def null_space(A: np.ndarray):
-    # TODO: make sure this is equivalent to just scipy.linalg.null_space(A)
-    # just scipy.linalg.null_space(A) works but seems to be way slower for A with nb of rows (a lot) bigger than number of columns
-    P, L, U = scipy.linalg.lu(A)
-    basis = scipy.linalg.null_space(U)
-    return basis
 
 
 def hom(M: ModuleFromIdeal, N: ModuleFromIdeal, char: int = 0) -> np.ndarray:
