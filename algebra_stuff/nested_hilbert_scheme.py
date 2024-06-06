@@ -138,11 +138,11 @@ class DoubleNestedHilbertScheme:
             raise NotImplementedError("dimension of Nested Hilbert Scheme of Points is only implemented for curves")
         return point.dim_at()
     
-    def tangent_space(self, nested_ideals: Union[YoungDiagramIdeals, List[List[PolyRingIdeal]]]) -> DoubleNestedHilbertSchemeTangentSpace:
+    def tangent_space(self, nested_ideals: Union[YoungDiagramIdeals, List[List[PolyRingIdeal]]], use_scipy: bool = True) -> DoubleNestedHilbertSchemeTangentSpace:
         if isinstance(nested_ideals, YoungDiagramIdeals):
-            return DoubleNestedHilbertSchemeTangentSpace(self, nested_ideals)
+            return DoubleNestedHilbertSchemeTangentSpace(self, nested_ideals, use_scipy=use_scipy)
         if isinstance(nested_ideals, list):
-            return DoubleNestedHilbertSchemeTangentSpace.from_ideal_list(self, nested_ideals)
+            return DoubleNestedHilbertSchemeTangentSpace.from_ideal_list(self, nested_ideals, use_scipy=use_scipy)
         raise TypeError
     
     def smooth_at(self, point: YoungDiagramIdeals) -> bool:
@@ -227,24 +227,25 @@ class DoubleNestedHilbertScheme:
 
 
 class DoubleNestedHilbertSchemeTangentSpace:
-    def __init__(self, base: DoubleNestedHilbertScheme, diagram_ideals: YoungDiagramIdeals):
+    def __init__(self, base: DoubleNestedHilbertScheme, diagram_ideals: YoungDiagramIdeals, use_scipy: bool = True):
         """
         The shape of the nested_ideals list must coincide with the space's diagram
         """
         if base.diagram != diagram_ideals.diagram:
             raise ValueError
         self.base = base
+        self.use_scipy = use_scipy
         self.diagram_ideals = diagram_ideals
         self.constraint_sizes: List[int] = []
         self.constraints = self._compute_constraints()
     
     @classmethod
-    def from_ideal_list(cls, base: DoubleNestedHilbertScheme, nested_ideals: List[List[PolyRingIdeal]]):
+    def from_ideal_list(cls, base: DoubleNestedHilbertScheme, nested_ideals: List[List[PolyRingIdeal]], use_scipy: bool = True):
         diagram_ideals = YoungDiagramIdeals(base, nested_ideals, base.R)
-        return cls(base, diagram_ideals)
+        return cls(base, diagram_ideals, use_scipy=use_scipy)
     
     @staticmethod
-    def _nested_hom_constraints(I1: PolyRingIdeal = None, I2: PolyRingIdeal = None) -> Tuple[np.ndarray, np.ndarray]:
+    def _nested_hom_constraints(I1: PolyRingIdeal = None, I2: PolyRingIdeal = None, use_scipy: bool = True) -> Tuple[np.ndarray, np.ndarray]:
         """
         Required: I₂ subset of I₁
         Constraints for the morphisms I₁ -> O₁ and I₂ -> O₂ to respect the inclusion Z₁ -> Z₂,
@@ -255,13 +256,14 @@ class DoubleNestedHilbertSchemeTangentSpace:
         
         Returns the constraint in two separate matrices, to be glued later
         """
+        dtype = decide_dtype(use_scipy)
         nested_modules = get_nested_modules(I1, I2)
         S, J1, J2, O1, O2 = nested_modules.components()
         k, m1, m2, n1, n2 = nested_modules.dims()
-        phi = HomSpace(J2, J1, precompute_constraints=False).get_matrix_representation(lambda f: f)
-        psi = HomSpace(O2, O1, precompute_constraints=False).get_matrix_representation(lambda f: f)
-        C1 = np.zeros((n1*m2, n1*m1))
-        C2 = np.zeros((n1*m2, n2*m2))
+        phi = HomSpace(J2, J1, precompute_constraints=False, use_scipy=use_scipy).get_matrix_representation(lambda f: f)
+        psi = HomSpace(O2, O1, precompute_constraints=False, use_scipy=use_scipy).get_matrix_representation(lambda f: f)
+        C1 = np.zeros((n1*m2, n1*m1), dtype=dtype)
+        C2 = np.zeros((n1*m2, n2*m2), dtype=dtype)
         for i in range(n1):
             for j in range(m2):
                 ind = i*m2 + j
@@ -285,7 +287,7 @@ class DoubleNestedHilbertSchemeTangentSpace:
         """
         morphism_constraints = []
         for I in self.diagram_ideals:
-            C = HilbertScheme(self.base.R).tangent_space(I)._constraints()
+            C = HilbertScheme(self.base.R).tangent_space(I, use_scipy=self.use_scipy)._constraints()
             morphism_constraints.append(C)
             size = C.shape[1]
             self.constraint_sizes.append(size)
@@ -293,7 +295,7 @@ class DoubleNestedHilbertSchemeTangentSpace:
         # padding with zeros
         for ind, C in enumerate(morphism_constraints):
             constraint_count = C.shape[0]
-            padding = lambda dim: np.zeros((constraint_count, dim))
+            padding = lambda dim: np.zeros((constraint_count, dim), dtype=decide_dtype(self.use_scipy))
             morphism_constraints[ind] = np.concatenate([padding(self._zeros_before(ind)), C, padding(self._zeros_after(ind))], axis=1)
         C = np.concatenate(morphism_constraints, axis=0)
         return C
@@ -306,11 +308,11 @@ class DoubleNestedHilbertSchemeTangentSpace:
         get_ideal_ind = lambda i, j: (self.diagram_ideals.index_mapping(i, j), self.diagram_ideals[i, j])
         ind1, I1 = get_ideal_ind(*pos1)
         ind2, I2 = get_ideal_ind(*pos2)
-        C1, C2 = self._nested_hom_constraints(I1, I2)
+        C1, C2 = self._nested_hom_constraints(I1, I2, use_scipy=self.use_scipy)
         constraint_count = C1.shape[0]
         
         # padding with zeros
-        padding = lambda dim: np.zeros((constraint_count, dim))
+        padding = lambda dim: np.zeros((constraint_count, dim), dtype=decide_dtype(self.use_scipy))
         C = np.concatenate(
             [
                 padding(self._zeros_before(ind1)),
@@ -349,7 +351,15 @@ class DoubleNestedHilbertSchemeTangentSpace:
     
     def dim(self) -> int:
         max_rank = sum(self.constraint_sizes)
-        return max_rank - (np.linalg.matrix_rank(self.constraints) if self.constraints.size > 0 else 0)
+        C = self.constraints if self.use_scipy else self.constraints.astype("float64")
+        rank = (np.linalg.matrix_rank(C) if C.size > 0 else 0)
+        return max_rank - rank
     
     def basis(self) -> np.ndarray:
-        return null_space(self.constraints)
+        if self.use_scipy:
+            return null_space(self.constraints)
+        else:
+            basis = exact_null_space(self.constraints)
+            if Scalar.MODE != Scalar.FRACTION:
+                basis = basis.astype("float64")
+            return basis
