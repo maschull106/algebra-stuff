@@ -141,6 +141,9 @@ class PolyRingIdeal:
         current_degrees[current] -= 1
         self._xplore_monomials(stop_operation, current_degrees, current+1, new=False)
     
+    def colength(self):
+        return len(self.degree())
+    
     def degree_for_base(self, base_ideal: PolyRingIdeal) -> List[GroebnerPolynomial]:
         if not self.has_max_radical():
             raise ValueError("the ideal does not have finite finite colength")
