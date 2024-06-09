@@ -106,7 +106,7 @@ class YoungDiagramIdeals:
         s_ideals = []
         for i, row in enumerate(self.rows()):
             for j, I in enumerate(row):
-                s_ideals.append(f"I{get_subscript(i+1)}{get_subscript(j+1)} = {I}")
+                s_ideals.append(f"I{get_subscript(i)}{get_subscript(j)} = {I}")
         return s_base + "\n" + s_ring + "\n" + "\n".join(s_ideals)
 
 
