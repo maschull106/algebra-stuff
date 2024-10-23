@@ -1,3 +1,6 @@
+needs "protect.m2"
+
+
 HilbertSchemePoint = new Type of HashTable
 TangentSpace = new Type of HashTable
 HilbertSchemeTangentSpace = new Type of TangentSpace
