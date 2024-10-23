@@ -35,7 +35,7 @@ f = map(T1, T2, matrix{{1, 0}}**R);
 
 
 nesting = quotNesting(T2, T1, p2, f)
-quotPoint = simpleNestedQuotSchemePoint(F, nesting)
+quotPoint = nestedQuotSchemePoint(F, {nesting})
 T = tangentSpace quotPoint
 
 

@@ -8,8 +8,8 @@ QuotSchemeTangentSpace = new Type of TangentSpace
 NestedQuotSchemeTangentSpace = new Type of TangentSpace
 
 QuotNesting = new Type of HashTable
-SimpleNestedQuotSchemePoint = new Type of HashTable
-SimpleNestedQuotSchemeTangentSpace = new Type of TangentSpace
+SimpleNestedQuotSchemePoint = new Type of NestedQuotSchemePoint
+SimpleNestedQuotSchemeTangentSpace = new Type of NestedQuotSchemeTangentSpace
 
 
 quotSchemePoint = method(TypicalValue => QuotSchemePoint)
@@ -114,7 +114,8 @@ asMorphism = (v, Target, Source) -> (
 )
 
 
-zeroMutableMatrix = (n, m) -> new MutableMatrix from matrix(for i from 1 to n list zeroList(m))
+zeroMatrix = (n, m) -> matrix(for i from 1 to n list zeroList(m))
+zeroMutableMatrix = (n, m) -> new MutableMatrix from zeroMatrix(n, m)
 
 
 
@@ -151,7 +152,9 @@ quotNesting (Module, Module, Matrix, Matrix) := (T2, T1, morphFT2, morphT2T1) ->
 )
 
 
-nestedQuotTangentConstraints = method(TypicalValue => Matrix)
+ConstraintsCouple = new Type of HashTable
+
+nestedQuotTangentConstraints = method(TypicalValue => ConstraintsCouple)
 
 nestedQuotTangentConstraints QuotNesting := nest -> (
     m1 = basisLength nest.HomBasis1;
@@ -178,12 +181,11 @@ nestedQuotTangentConstraints QuotNesting := nest -> (
 
     C2 = for i from 0 to m2-1 list phiCompose(nest.HomBasis2_i);
 
-    -- C1 = matrix C1;
-    -- C1 = transpose C1;
-    -- C2 = matrix C2;
-    -- C2 = transpose C2;
-    -- return C1 | C2;
-    return transpose(matrix(C1)) | transpose(matrix(C2));
+    C1 = transpose(matrix(C1));
+    C2 = transpose(matrix(C2));
+
+    return new ConstraintsCouple from {Constraint1 => C1, Constraint2 => C2};
+    -- return transpose(matrix(C1)) | transpose(matrix(C2));
 )
 
 
@@ -198,7 +200,8 @@ simpleNestedQuotSchemePoint (Module, QuotNesting) := (F, nesting) -> (
 
 
 tangentSpace SimpleNestedQuotSchemePoint := p -> (
-    C = nestedQuotTangentConstraints(p.Nesting);
+    constraints = nestedQuotTangentConstraints(p.Nesting);
+    C = constraints.Constraint1 | constraints.Constraint2;
 
     return new SimpleNestedQuotSchemeTangentSpace from {
         OriginPoint => p,
@@ -207,6 +210,34 @@ tangentSpace SimpleNestedQuotSchemePoint := p -> (
 )
 
 
-dim SimpleNestedQuotSchemeTangentSpace := T -> rank T.Space
+dim NestedQuotSchemeTangentSpace := T -> rank T.Space
 
 
+
+nestedQuotSchemePoint (Module, List) := (F, nestings) -> (
+    return new NestedQuotSchemePoint from {
+        ConstructionSheaf => F,
+        Nestings => nestings
+    };
+)
+
+
+tangentSpace NestedQuotSchemePoint := p -> (
+    widthSoFar = 0;
+    for i from 0 to length(p.Nestings)-1 do (
+        constr = nestedQuotTangentConstraints(p.Nestings_i);
+        C = constr.Constraint2 | constr.Constraint1;
+        w2 = numcols constr.Constraint2;
+        w1 = numcols constr.Constraint1;
+        h = numrows C;
+        if widthSoFar == 0 then (totalC = C; widthSoFar = w2; continue;);
+        currentH = numrows totalC;
+        totalC = (totalC | zeroMatrix(currentH, w1)) || (zeroMatrix(h, widthSoFar) | C);
+        widthSoFar = widthSoFar + w2;
+    );
+
+    return new NestedQuotSchemeTangentSpace from {
+        OriginPoint => p,
+        Space => ker totalC
+    };
+)
