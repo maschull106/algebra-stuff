@@ -62,8 +62,8 @@ mSize = m -> length flatten entries m;
 
 basisLength = B -> numcols B
 
--- toVector = v -> vector flatten entries v; -- (transpose matrix {flatten entries v})_0;
-toVector = v -> vector flatten entries transpose matrix entries v;
+toVector = v -> vector flatten entries v; -- (transpose matrix {flatten entries v})_0;
+-- toVector = v -> vector flatten entries transpose matrix entries v;
 
 -- reduceToBasis (Matrix, Matrix) := opts -> (v, Basis) -> (
 --     v = (transpose matrix {flatten entries phi})_0;
@@ -76,9 +76,9 @@ reduceOnIndex = (v, Basis, i, coords) -> (
     while v_i != 0 do (
         for j from 0 to basisLength(Basis)-1 do 
             if v_i == 0 then return v
-            else if Basis_(i,j) == 0 then continue
-            else if leadMonomial(v_i) == leadMonomial(Basis_(i,j)) then (
-                c = leadCoefRatio(v_i, Basis_(i,j)); coords#j = coords#j + c; v = v - c*Basis_j;
+            else if Basis_j_i == 0 then continue
+            else if leadMonomial(v_i) == leadMonomial(Basis_j_i) then (
+                c = leadCoefRatio(v_i, Basis_j_i); coords#j = coords#j + c; v = v - c*toVector(Basis_j);
             )
     );
     return v;
@@ -102,14 +102,14 @@ reduceToBasis (Matrix, Matrix) := (v, Basis) -> (
 
 
 
-
-inclusionMap = (Target, Source) -> map(Target, Source, gens Source)
+-- TODO: investigate this function more
+inclusionMap = (Target, Source) -> try map(Target, Source, gens Source) else inducedMap(Target, Source)
 
 
 asMorphism = (v, Target, Source) -> (
     m = numgens Source;
     n = numgens Target;
-    M = for i from 0 to n-1 list for j from 0 to m-1 list v_(j*m+i);
+    M = for i from 0 to n-1 list for j from 0 to m-1 list v_(j*n+i);
     return map(Target, Source, M);
 )
 
@@ -117,6 +117,7 @@ asMorphism = (v, Target, Source) -> (
 zeroMatrix = (n, m) -> matrix(for i from 1 to n list zeroList(m))
 zeroMutableMatrix = (n, m) -> new MutableMatrix from zeroMatrix(n, m)
 
+idMatrix = n -> matrix(for i from 1 to n list for j from 1 to n list if i==j then 1 else 0)
 
 
 
@@ -164,6 +165,7 @@ nestedQuotTangentConstraints QuotNesting := nest -> (
 
     -- C = zeroMutableMatrix(n, m);
 
+    H = Hom(nest.Kernel2, nest.Module1);
     psiCompose = v -> (
         fK1T1 = asMorphism(v, nest.Module1, nest.Kernel1);
         fK2T1 = fK1T1 * nest.Psi;
@@ -213,6 +215,31 @@ tangentSpace SimpleNestedQuotSchemePoint := p -> (
 dim NestedQuotSchemeTangentSpace := T -> rank T.Space
 
 
+nestedHilbSchemePoint = method(TypicalValue => NestedQuotSchemePoint)
+
+nestedHilbSchemePoint List := modules -> (
+    R = ring modules_0;
+    r = rank modules_0;
+    idMat = idMatrix(r)**R;
+    morphisms = for i from 0 to length(modules)-2 list (
+        map(modules_(i+1), modules_i, idMat)
+    );
+    return nestedQuotSchemePoint(morphisms);
+)
+
+
+nestedQuotSchemePoint List := morphisms -> (
+    F = source morphisms_0;
+    morphFT2 = morphisms_0;
+    nestings = for i from 1 to length(morphisms)-1 list (
+        T2 = source morphisms_i;
+        T1 = target morphisms_i;
+        -- if i > 1 then (print target morphFT2; print source morphisms_(i-1); morphFT2 = morphisms_(i-1) * morphFT2;);
+        if i > 1 then morphFT2 = morphisms_(i-1) * morphFT2;
+        quotNesting(T2, T1, morphFT2, morphisms_i)
+    );
+    return nestedQuotSchemePoint(F, nestings);
+)
 
 nestedQuotSchemePoint (Module, List) := (F, nestings) -> (
     return new NestedQuotSchemePoint from {

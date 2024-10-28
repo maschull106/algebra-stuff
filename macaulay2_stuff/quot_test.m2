@@ -34,9 +34,61 @@ p2 = map(T2, F, matrix{{1},{1}}**R);
 f = map(T1, T2, matrix{{1, 0}}**R);
 
 
-nesting = quotNesting(T2, T1, p2, f)
-quotPoint = nestedQuotSchemePoint(F, {nesting})
-T = tangentSpace quotPoint
+
+
+R=QQ[x,y,z]; I=ideal(x^2, x*y^2, x*y*z, x*z^2, y^2*z^2, y*z^3, z^4, y^3-x*z)
+F = R^1
+O = R^1/I
+f = map(O, F, matrix{{1}}**R)
+
+-- quotPoint = nestedQuotSchemePoint({f})
+-- T = tangentSpace quotPoint
+
+
+
+
+-- Cheah's nested Hilbert schemes singularity examples
+
+R = QQ[x,y]
+I1 = ideal(x, y); I2 = ideal(x^2, y); I3 = ideal(x^2, x*y, y^2)
+F = R^1
+T1 = F/I1; T2 = F/I2; T3 = F/I3
+quotPoint1 = nestedHilbSchemePoint({F, T3, T2, T1})
+Tspace1 = tangentSpace quotPoint1
+
+
+quotPoint2 = nestedHilbSchemePoint({F, T3, T1})
+Tspace2 = tangentSpace quotPoint2
+
+
+R = QQ[x,y, z]
+I1 = ideal(x^2, y^2, z^2, x*y, x*z, y*z); I2 = ideal(x^2, y^2, z^2)
+F = R^1
+T1 = F/I1; T2 = F/I2
+quotPoint3 = nestedHilbSchemePoint({F, T2, T1})
+Tspace3 = tangentSpace quotPoint3
+
+
+
+
+-- Singularity examples for nested Quot schemes
+
+R = QQ[x, y]
+F = R^2
+P = R^1/ideal(x, y)
+T2 = P ++ P
+T1 = P
+p2 = map(T2, F, matrix{{1,0},{0,1}}**R)
+f = map(T1, T2, matrix{{1, 1}}**R)
+quotPoint4 = nestedQuotSchemePoint({p2, f})
+Tspace4 = tangentSpace quotPoint4
+
+
+
+
+-- nesting = quotNesting(T2, T1, p2, f)
+-- quotPoint = nestedQuotSchemePoint(F, {nesting})
+-- T = tangentSpace quotPoint
 
 
 
