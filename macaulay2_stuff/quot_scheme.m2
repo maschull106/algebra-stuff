@@ -11,6 +11,8 @@ QuotNesting = new Type of HashTable
 SimpleNestedQuotSchemePoint = new Type of NestedQuotSchemePoint
 SimpleNestedQuotSchemeTangentSpace = new Type of NestedQuotSchemeTangentSpace
 
+DoubleNestedQuotSchemePoint = new Type of HashTable
+
 
 quotSchemePoint = method(TypicalValue => QuotSchemePoint)
 
@@ -137,17 +139,17 @@ quotNesting (Module, Module, Matrix, Matrix) := (T2, T1, morphFT2, morphT2T1) ->
     psi = inclusionMap(K1, K2);
 
     return new QuotNesting from {
-        Module2 => T2,
-        Module1 => T1,
-        Quotient2 => quot2,
-        Quotient1 => quot1,
+        ModuleSource => T2,
+        ModuleTarget => T1,
+        QuotientSource => quot2,
+        QuotientTarget => quot1,
         Phi => phi,
         Psi => psi,
-        Kernel2 => K2,
-        Kernel1 => K1,
+        KernelSource => K2,
+        KernelTarget => K1,
         Length => {degree T1, degree T2},
-        HomBasis1 => basis Hom(K1, T1),
-        HomBasis2 => basis Hom(K2, T2),
+        HomBasisTarget => basis Hom(K1, T1),
+        HomBasisSource => basis Hom(K2, T2),
         HomCrossBasis => basis Hom(K2, T1)
     };
 )
@@ -158,30 +160,30 @@ ConstraintsCouple = new Type of HashTable
 nestedQuotTangentConstraints = method(TypicalValue => ConstraintsCouple)
 
 nestedQuotTangentConstraints QuotNesting := nest -> (
-    m1 = basisLength nest.HomBasis1;
-    m2 = basisLength nest.HomBasis2;
+    m1 = basisLength nest.HomBasisTarget;
+    m2 = basisLength nest.HomBasisSource;
     m = m1 + m2;
     n = basisLength nest.HomCrossBasis;
 
     -- C = zeroMutableMatrix(n, m);
 
-    H = Hom(nest.Kernel2, nest.Module1);
+    H = Hom(nest.KernelSource, nest.ModuleTarget);
     psiCompose = v -> (
-        fK1T1 = asMorphism(v, nest.Module1, nest.Kernel1);
+        fK1T1 = asMorphism(v, nest.ModuleTarget, nest.KernelTarget);
         fK2T1 = fK1T1 * nest.Psi;
         coords = reduceToBasis(fK2T1, nest.HomCrossBasis);
         return coords;
     );
     phiCompose = v -> (
-        fK2T2 = asMorphism(v, nest.Module2, nest.Kernel2);
+        fK2T2 = asMorphism(v, nest.ModuleSource, nest.KernelSource);
         fK2T1 = - nest.Phi * fK2T2;
         coords = reduceToBasis(fK2T1, nest.HomCrossBasis);
         return coords;
     );
 
-    C1 = for i from 0 to m1-1 list psiCompose(nest.HomBasis1_i);
+    C1 = for i from 0 to m1-1 list psiCompose(nest.HomBasisTarget_i);
 
-    C2 = for i from 0 to m2-1 list phiCompose(nest.HomBasis2_i);
+    C2 = for i from 0 to m2-1 list phiCompose(nest.HomBasisSource_i);
 
     C1 = transpose(matrix(C1));
     C2 = transpose(matrix(C2));
@@ -229,6 +231,7 @@ nestedHilbSchemePoint List := modules -> (
 
 
 nestedQuotSchemePoint List := morphisms -> (
+    -- TODO: surjectivity check 
     F = source morphisms_0;
     morphFT2 = morphisms_0;
     nestings = for i from 1 to length(morphisms)-1 list (
