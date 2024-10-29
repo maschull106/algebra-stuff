@@ -188,7 +188,7 @@ nestedQuotTangentConstraints QuotNesting := nest -> (
     C1 = transpose(matrix(C1));
     C2 = transpose(matrix(C2));
 
-    return new ConstraintsCouple from {Constraint1 => C1, Constraint2 => C2};
+    return new ConstraintsCouple from {ConstraintOnTarget => C1, ConstraintOnSource => C2};
     -- return transpose(matrix(C1)) | transpose(matrix(C2));
 )
 
@@ -205,7 +205,7 @@ simpleNestedQuotSchemePoint (Module, QuotNesting) := (F, nesting) -> (
 
 tangentSpace SimpleNestedQuotSchemePoint := p -> (
     constraints = nestedQuotTangentConstraints(p.Nesting);
-    C = constraints.Constraint1 | constraints.Constraint2;
+    C = constraints.ConstraintOnTarget | constraints.ConstraintOnSource;
 
     return new SimpleNestedQuotSchemeTangentSpace from {
         OriginPoint => p,
@@ -256,9 +256,9 @@ tangentSpace NestedQuotSchemePoint := p -> (
     widthSoFar = 0;
     for i from 0 to length(p.Nestings)-1 do (
         constr = nestedQuotTangentConstraints(p.Nestings_i);
-        C = constr.Constraint2 | constr.Constraint1;
-        w2 = numcols constr.Constraint2;
-        w1 = numcols constr.Constraint1;
+        C = constr.ConstraintOnSource | constr.ConstraintOnTarget;
+        w2 = numcols constr.ConstraintOnSource;
+        w1 = numcols constr.ConstraintOnTarget;
         h = numrows C;
         if widthSoFar == 0 then (totalC = C; widthSoFar = w2; continue;);
         currentH = numrows totalC;
