@@ -1,4 +1,4 @@
-needs "quot_scheme.m2"
+needs "double_nested_quot_scheme.m2"
 
 R = QQ[x];
 
@@ -98,7 +98,7 @@ Tspace4 = tangentSpace quotPoint4
 
 R = QQ[x]
 F = R^1
-I0 = ideal(1)**R; I1 = ideal(x); I2 = ideal(x); I3 = ideal(x*(x-1))
+I0 = ideal(1)**R; I1 = ideal(x); I2 = ideal(x); I3 = ideal(x^2)
 T0 = F/I0; T1 = F/I1; T2 = F/I2; T3 = F/I3
 idMat = idMatrix(1)**R;
 q0 = map(T0, F, idMat); q1 = map(T1, F, idMat); q2 = map(T2, F, idMat); q3 = map(T3, F, idMat)
@@ -114,7 +114,7 @@ node0 = graphNode(
     Right=>nodeInfo(node1, f10),
     Down=>nodeInfo(node2, f20)
 )
-p = doubleNestedQuotSchemePoint(node0)
-T = tangentSpace p
+quotPoint5 = doubleNestedQuotSchemePoint(node0)
+Tspace5 = tangentSpace quotPoint5
 
 
