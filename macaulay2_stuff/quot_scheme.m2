@@ -106,7 +106,8 @@ reduceToBasis (Matrix, Matrix) := (v, Basis) -> (
 
 
 -- TODO: investigate this function more
-inclusionMap = (Target, Source) -> try map(Target, Source, gens Source) else inducedMap(Target, Source)
+-- inclusionMap = (Target, Source) -> try map(Target, Source, gens Source) else inducedMap(Target, Source)
+inclusionMap = (Target, Source) -> try inducedMap(Target, Source) else (print "warning, classical induced map didn't work!!"; map(Target, Source, gens Source))
 
 
 asMorphism = (v, Target, Source) -> (
@@ -127,7 +128,7 @@ idMatrix = n -> matrix(for i from 1 to n list for j from 1 to n list if i==j the
 quotNesting = method(TypicalValue => QuotNesting)
 
 quotNesting (Module, Module, Matrix, Matrix) := (T2, T1, morphFT2, morphT2T1) -> (
-    if dim(T2) != 0 or dim(T1) != 0 then error "the quotients must be zero dimensional";
+    if dim(T2) > 0 or dim(T1) > 0 then error "the quotients must be zero dimensional";
 
     quot2 = morphFT2;
     quot1 = morphT2T1 * morphFT2;
@@ -168,7 +169,7 @@ nestedQuotTangentConstraints QuotNesting := nest -> (
 
     -- C = zeroMutableMatrix(n, m);
 
-    H = Hom(nest.KernelSource, nest.ModuleTarget);
+    -- H = Hom(nest.KernelSource, nest.ModuleTarget);
     psiCompose = v -> (
         fK1T1 = asMorphism(v, nest.ModuleTarget, nest.KernelTarget);
         fK2T1 = fK1T1 * nest.Psi;
@@ -186,6 +187,8 @@ nestedQuotTangentConstraints QuotNesting := nest -> (
 
     C2 = for i from 0 to m2-1 list phiCompose(nest.HomBasisSource_i);
 
+    if length C1 == 0 then C1 = {{}};
+    if length C2 == 0 then C2 = {{}};
     C1 = transpose(matrix(C1));
     C2 = transpose(matrix(C2));
 
@@ -437,23 +440,6 @@ homBasesLengths NestingCell := nestBase -> (
     lengthsCumulative = {};
     flatIndices = new MutableHashTable from {};
 
-    -- nextRow = p.nestBase;
-    -- row = 0;
-    -- while not(nextRow === null) do (
-    --     nextCell = nextRow;
-    --     col = 0;
-    --     while not(nextCell === null) do (
-    --         flatIndices#(row, col) = length(lengths);
-    --         lengthsCumulative = append(lengthsCumulative, sum(lengths));
-    --         lengths = append(lengths, basisLength(nextCell.HomBasis));
-    --         col = col+1;
-    --         nextCell = nextCell.CellRight;
-    --     );
-    --     row = row+1;
-    --     nextRow = nextRow.CellDown;
-    -- );
-    -- lengthsCumulative = append(lengthsCumulative, sum(lengths));
-
     iterateRows(
         nestBase, 
         loopOp => (cell, row, col) -> (
@@ -474,7 +460,6 @@ doubleNestingConstraint (DoubleNestedQuotSchemePoint, QuotNesting, ZZ, ZZ) := (p
     constr = nestedQuotTangentConstraints(nesting);
     n = numrows constr.ConstraintOnSource;
     C = zeroMutableMatrix(n, totalM);
-    print p.BasisLengthsCumulative;
     matrixWriteSlice(C, 0, p.BasisLengthsCumulative_sourceIndex, constr.ConstraintOnSource);
     matrixWriteSlice(C, 0, p.BasisLengthsCumulative_targetIndex, constr.ConstraintOnTarget);
     return new Matrix from C;
@@ -521,8 +506,6 @@ tangentSpace DoubleNestedQuotSchemePoint := p -> (
 
 
 matrixWriteSlice = (M, rowStart, colStart, Mslice) -> (
-    print rowStart;
-    print colStart;
     for i from 0 to numrows(Mslice)-1 do for j from 0 to numcols(Mslice)-1 do M_(rowStart+i,colStart+j) = Mslice_(i,j);
 )
 

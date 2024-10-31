@@ -86,60 +86,29 @@ Tspace4 = tangentSpace quotPoint4
 
 
 
--- nesting = quotNesting(T2, T1, p2, f)
--- quotPoint = nestedQuotSchemePoint(F, {nesting})
--- T = tangentSpace quotPoint
-
-
-
-
-
--- p1 = f*p2
--- K1 = ker p1
--- K2 = ker p2
--- -- p = quotSchemePoint(f);
-
--- -- T = tangentSpace p;
-
-
--- phi = f;
--- psi = inclusionMap(K1, K2);
-
--- H1 = Hom(K1, T1);
--- H2 = Hom(K2, T2);
--- H3 = Hom(K2, T1);
-
--- basis1 = basis H1;
--- basis2 = basis H2;
--- basis3 = basis H3;
-
--- L = constraints(K1, K2, T1, T2, psi, phi, basis1, basis2, basis3);
-
--- -- phi = map(T1, K2, matrix{{x+1, 2-x}})
-
-
-
-
 
 
 
 
 -- Q0 <--- Q1
---  ^
---  |
--- Q2
+--  ^       ^
+--  |       |
+-- Q2 <--- Q3
 
 
 R = QQ[x]
 F = R^1
-I0 = ideal(x); I1 = ideal(x^2); I2 = ideal(x*(x-1))
-T0 = F/I0; T1 = F/I1; T2 = F/I2
+I0 = ideal(1)**R; I1 = ideal(x); I2 = ideal(x); I3 = ideal(x*(x-1))
+T0 = F/I0; T1 = F/I1; T2 = F/I2; T3 = F/I3
 idMat = idMatrix(1)**R;
-q0 = map(T0, F, idMat); q1 = map(T1, F, idMat); q2 = map(T2, F, idMat)
+q0 = map(T0, F, idMat); q1 = map(T1, F, idMat); q2 = map(T2, F, idMat); q3 = map(T3, F, idMat)
 f20 = map(T0, T2, idMat)
 f10 = map(T0, T1, idMat)
-node2 = graphNode(q2)
-node1 = graphNode(q1)
+f32 = map(T2, T3, idMat)
+f31 = map(T1, T3, idMat)
+node3 = graphNode(q3)
+node2 = graphNode(q2, Right=>nodeInfo(node3, f32))
+node1 = graphNode(q1, Down=>nodeInfo(node3, f31))
 node0 = graphNode(
     q0, 
     Right=>nodeInfo(node1, f10),
@@ -147,3 +116,5 @@ node0 = graphNode(
 )
 p = doubleNestedQuotSchemePoint(node0)
 T = tangentSpace p
+
+
