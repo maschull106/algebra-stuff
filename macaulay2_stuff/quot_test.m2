@@ -118,3 +118,31 @@ quotPoint5 = doubleNestedQuotSchemePoint(node0)
 Tspace5 = tangentSpace quotPoint5
 
 
+
+
+
+
+
+R = QQ[x]
+F = R^2
+I0 = ideal(1)**R; I1 = ideal(x); I2 = ideal(x); I3 = ideal(x^2)
+T0 = R^1/I0; T1 = R^1/I1; T2 = R^1/I2; T3 = T1++T1 --T3 = R^1/I3
+idMat = idMatrix(1)**R;
+pMat = matrix{{1, 1}}**R
+q0 = map(T0, F, pMat); q1 = map(T1, F, pMat); q2 = map(T2, F, pMat); q3 = map(T3, F, matrix{{1,0},{0,1}}**R)
+f20 = map(T0, T2, idMat)
+f10 = map(T0, T1, idMat)
+f32 = map(T2, T3, pMat)
+f31 = map(T1, T3, pMat)
+node3 = graphNode(q3)
+node2 = graphNode(q2, Right=>nodeInfo(node3, f32))
+node1 = graphNode(q1, Down=>nodeInfo(node3, f31))
+node0 = graphNode(
+    q0, 
+    Right=>nodeInfo(node1, f10),
+    Down=>nodeInfo(node2, f20)
+)
+quotPoint6 = doubleNestedQuotSchemePoint(node0)
+Tspace6 = tangentSpace quotPoint6
+
+
