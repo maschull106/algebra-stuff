@@ -53,11 +53,11 @@ R = QQ[x,y]
 I1 = ideal(x, y); I2 = ideal(x^2, y); I3 = ideal(x^2, x*y, y^2)
 F = R^1
 T1 = F/I1; T2 = F/I2; T3 = F/I3
-quotPoint1 = nestedHilbSchemePoint({F, T3, T2, T1})
+quotPoint1 = nestedHilbSchemePoint2({F, T3, T2, T1})
 Tspace1 = tangentSpace quotPoint1
 
 
-quotPoint2 = nestedHilbSchemePoint({F, T3, T1})
+quotPoint2 = nestedHilbSchemePoint2({F, T3, T1})
 Tspace2 = tangentSpace quotPoint2
 
 
@@ -65,7 +65,7 @@ R = QQ[x,y, z]
 I1 = ideal(x^2, y^2, z^2, x*y, x*z, y*z); I2 = ideal(x^2, y^2, z^2)
 F = R^1
 T1 = F/I1; T2 = F/I2
-quotPoint3 = nestedHilbSchemePoint({F, T2, T1})
+quotPoint3 = nestedHilbSchemePoint2({F, T2, T1})
 Tspace3 = tangentSpace quotPoint3
 
 
@@ -80,7 +80,7 @@ T2 = P ++ P
 T1 = P
 p2 = map(T2, F, matrix{{1,0},{0,1}}**R)
 f = map(T1, T2, matrix{{1, 1}}**R)
-quotPoint4 = nestedQuotSchemePoint({p2, f})
+quotPoint4 = nestedQuotSchemePoint2({p2, f})
 Tspace4 = tangentSpace quotPoint4
 
 
@@ -116,3 +116,34 @@ Tspace4 = tangentSpace quotPoint4
 -- L = constraints(K1, K2, T1, T2, psi, phi, basis1, basis2, basis3);
 
 -- -- phi = map(T1, K2, matrix{{x+1, 2-x}})
+
+
+
+
+
+
+
+
+-- Q0 <--- Q1
+--  ^
+--  |
+-- Q2
+
+
+R = QQ[x]
+F = R^1
+I0 = ideal(x); I1 = ideal(x^2); I2 = ideal(x*(x-1))
+T0 = F/I0; T1 = F/I1; T2 = F/I2
+idMat = idMatrix(1)**R;
+q0 = map(T0, F, idMat); q1 = map(T1, F, idMat); q2 = map(T2, F, idMat)
+f20 = map(T0, T2, idMat)
+f10 = map(T0, T1, idMat)
+node2 = graphNode(q2)
+node1 = graphNode(q1)
+node0 = graphNode(
+    q0, 
+    Right=>nodeInfo(node1, f10),
+    Down=>nodeInfo(node2, f20)
+)
+p = doubleNestedQuotSchemePoint(node0)
+T = tangentSpace p
