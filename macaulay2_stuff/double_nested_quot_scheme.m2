@@ -314,7 +314,7 @@ makeNode (ZZ, ZZ, List, MutableHashTable) := (row, col, data, memory) -> (
         qRight = n.QuotMap;
         q = qRight;
         nodeRight = nodeInfo(n.NodeRight, n.MapFromRight);
-        if qLeft =!= null and qRight != qLeft then error("noncommutative");
+        if qDown =!= null and qRight != qDown then error("noncommutative");
     ) else (nodeRight = null);
 
     return graphNode(q, Right=>nodeRight, Down=>down);
