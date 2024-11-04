@@ -128,6 +128,8 @@ quotNesting = method(TypicalValue => QuotNesting)
 
 quotNesting (Module, Module, Matrix, Matrix) := (T2, T1, morphFT2, morphT2T1) -> (
     if dim(T2) > 0 or dim(T1) > 0 then error "the quotients must be zero dimensional";
+    if not isSurjective morphT2T1 then error("Quotient should be surjective");
+    if not isSurjective morphFT2 then error("Quotient should be surjective");
 
     quot2 = morphFT2;
     quot1 = morphT2T1 * morphFT2;
@@ -223,7 +225,7 @@ dim NestedQuotSchemeTangentSpace := T -> rank T.Space
 nestedHilbSchemePoint = method(TypicalValue => NestedQuotSchemePoint)
 
 nestedHilbSchemePoint List := modules -> (
-    R = ring modules_0;
+    R := ring modules_0;
     r = rank modules_0;
     idMat = idMatrix(r)**R;
     morphisms = for i from 0 to length(modules)-2 list (
@@ -238,8 +240,8 @@ nestedQuotSchemePoint List := morphisms -> (
     F := source morphisms_0;
     morphFT2 = morphisms_0;
     nestings = for i from 1 to length(morphisms)-1 list (
-        T2 = source morphisms_i;
-        T1 = target morphisms_i;
+        T2 := source morphisms_i;
+        T1 := target morphisms_i;
         -- if i > 1 then (print target morphFT2; print source morphisms_(i-1); morphFT2 = morphisms_(i-1) * morphFT2;);
         if i > 1 then morphFT2 = morphisms_(i-1) * morphFT2;
         quotNesting(T2, T1, morphFT2, morphisms_i)

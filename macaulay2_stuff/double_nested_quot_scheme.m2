@@ -76,8 +76,8 @@ constructNestingCell GraphNode := node -> (
 
     if not(node.MapFromRight === null) then (
         morph = node.MapFromRight;
-        T2 = source morph;
-        T1 = target morph;
+        T2 := source morph;
+        T1 := target morph;
         morphFT2 = node.NodeRight.QuotMap;
         nestingRight = quotNesting(T2, T1, morphFT2, morph);
     ) else nestingRight = null;
@@ -85,8 +85,8 @@ constructNestingCell GraphNode := node -> (
 
     if not(node.MapFromDown === null) then (
         morph = node.MapFromDown;
-        T2 = source morph;
-        T1 = target morph;
+        T2 := source morph;
+        T1 := target morph;
         morphFT2 = node.NodeDown.QuotMap;
         nestingDown = quotNesting(T2, T1, morphFT2, morph);
     ) else nestingDown = null;
@@ -216,7 +216,7 @@ tangentSpace DoubleNestedQuotSchemePoint := p -> (
             );
             if not(nextCell.CellDown === null) then (
                 targetIndex = p.CellFlatIndices#(row, col);
-                try sourceIndex = p.CellFlatIndices#(row+1, col) else error "";--(print nextCell; error);
+                sourceIndex = p.CellFlatIndices#(row+1, col);
                 C = doubleNestingConstraint(p, nextCell.NestingDown, sourceIndex, targetIndex);
                 totalC = totalC || C;
             );
@@ -259,7 +259,7 @@ nestedQuotSchemePoint2 List := morphisms -> (
 nestedHilbSchemePoint2 = method(TypicalValue => DoubleNestedQuotSchemePoint)
 
 nestedHilbSchemePoint2 List := modules -> (
-    R = ring modules_0;
+    R := ring modules_0;
     r = rank modules_0;
     idMat = idMatrix(r)**R;
     morphisms = for i from 0 to length(modules)-2 list (
@@ -275,7 +275,7 @@ nestedHilbSchemePoint2 List := modules -> (
 
 makeNode = method(TypicalValue => GraphNode, Options => {Memory=>new MutableHashTable from {}})
 makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
-    memoryFetch = (r, c) -> (if not member((r, c), keys opts.Memory) then opts.Memory#(r, c) = makeNode(F, r, c, data, Memory=>opts.Memory) else print "fetching from memory"; return opts.Memory#(r, c););
+    memoryFetch = (r, c) -> (if not member((r, c), keys opts.Memory) then opts.Memory#(r, c) = makeNode(F, r, c, data, Memory=>opts.Memory); return opts.Memory#(r, c););
     getModule = (r, c) -> (if r%2 != 0 or c%2 != 0 then error("invalid indices"); cell = data_r_c; if instance(cell, Module) then return cell; if instance(cell_0, Module) then return cell_0; error("couldn't get module"));
     nextModule = (r, c, onRow) -> (if onRow then (r, c+2) else (r+2, c));
 
@@ -286,7 +286,7 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
         -- print (toString(c) | " " | toString(col));
         -- print "";
         src = getModule(nextModule(r, c, onRow));
-        R = ring trgt;
+        R := ring trgt;
         mat = if onRow then data_r_(c+1) else data_(r+1)_(c//2);
         if instance(mat, List) then mat = matrix mat;
         f = map(trgt, src, mat**R);
@@ -310,15 +310,13 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
     hasRightBranch = member((row, col), keys opts.Memory);
     isLeaf = not hasRightBranch and nodeDown === null;
     if isLeaf then (
-        print ("leaf" | toString(row) | toString(col));
         cell = data_row_col;
         QModule = cell_0; q = cell_1;
         if instance(q, List) then q = matrix q;
-        R = ring QModule;
-        print F;
+        R := ring QModule;
         q = map(QModule, F, q**R);
         return graphNode(q);
-    ) else print ("node" | toString(row) | toString(col));
+    );
 
     q = qDown;
     if hasRightBranch then (
