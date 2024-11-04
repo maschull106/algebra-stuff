@@ -267,3 +267,60 @@ nestedHilbSchemePoint2 List := modules -> (
     );
     return nestedQuotSchemePoint2(morphisms);
 )
+
+
+
+
+
+
+makeNode = method(TypicalValue => GraphNode)
+makeNode (ZZ, ZZ, List, MutableHashTable) := (row, col, data, memory) -> (
+    memoryFetch = (r, c) -> (if not member((r, c), keys memory) then memory#(r, c) = makeNode(r, c, data, memory) else print "fetching from memory"; return memory#(r, c););
+    getModule = (r, c) -> (if r%2 != 0 or c%2 != 0 then error("invalid indices"); cell = data_r_c; if instance(cell, Module) then return cell; if instance(cell_0, Module) then return cell_0; error("couldn't get module"));
+
+    -- TODO: get rid of repeating code
+    if length data_row > col+1 then (
+        n = memoryFetch(row, col+2);
+        trgt = data_row_col;
+        src = getModule(row, col+2);
+        R = ring trgt;
+        f = map(trgt, src, data_row_(col+1)**R);
+        nodeRight = nodeInfo(n, f);
+        qRight = f * n.QuotMap;
+        -- temporary save of right info
+        memory#(row, col) = graphNode(qRight, Right=>nodeRight);
+    ) else (nodeRight = null; qRight = null;);
+    if length data_col > row+1 then (
+        n = memoryFetch(row+2, col);
+        trgt = data_row_col;
+        src = getModule(row+2, col);
+        R = ring trgt;
+        mat = data_(row+1)_(col//2);
+        f = map(trgt, src, mat**R);
+        down = nodeInfo(n, f);
+        qDown = f * n.QuotMap;
+    ) else (down = null; qDown = null;);
+
+    hasRightBranch = member((row, col), keys memory);
+    if not hasRightBranch and down === null then (
+        cell = data_row_col;
+        Q = cell_0; q = cell_1;
+        return graphNode(q);
+    );
+
+    q = qDown;
+    if hasRightBranch then (
+        n = memory#(row, col); 
+        qRight = n.QuotMap;
+        q = qRight;
+        nodeRight = nodeInfo(n.NodeRight, n.MapFromRight);
+        if qLeft =!= null and qRight != qLeft then error("noncommutative");
+    ) else (nodeRight = null);
+
+    return graphNode(q, Right=>nodeRight, Down=>down);
+)
+
+doubleNestedQuotSchemePoint (Module, List) := (F, data) -> (
+    node = makeNode(0, 0, data, new MutableHashTable from {});
+    return doubleNestedQuotSchemePoint(node);
+)
