@@ -202,4 +202,3 @@ quotPoint9 = doubleNestedQuotSchemePoint(
     }
 )
 Tspace9 = tangentSpace quotPoint9
-
