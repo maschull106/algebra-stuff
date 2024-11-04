@@ -104,7 +104,7 @@ reduceToBasis (Matrix, Matrix) := (v, Basis) -> (
 
 -- TODO: investigate this function more
 -- inclusionMap = (Target, Source) -> try map(Target, Source, gens Source) else inducedMap(Target, Source)
-inclusionMap = (Target, Source) -> try inducedMap(Target, Source) else (print "warning, classical induced map didn't work!!"; map(Target, Source, gens Source))
+inclusionMap = (Target, Source) -> try inducedMap(Target, Source) else (print "warning, classical induced map didn't work!!"; error "aa"; map(Target, Source, gens Source))
 
 
 asMorphism = (v, Target, Source) -> (
@@ -115,10 +115,12 @@ asMorphism = (v, Target, Source) -> (
 )
 
 
-zeroMatrix = (n, m) -> if n == 0 then if m == 0 then matrix{{}}**Q else transpose zeroMatrix(m, n) else matrix(for i from 1 to n list zeroList(m))**QQ
+zeroMatrix = (n, m) -> if n == 0 then if m == 0 then matrix{{}}**QQ else transpose zeroMatrix(m, n) else matrix(for i from 1 to n list zeroList(m))**QQ
 zeroMutableMatrix = (n, m) -> (new MutableMatrix from zeroMatrix(n, m))
 
-idMatrix = n -> matrix(for i from 1 to n list for j from 1 to n list if i==j then 1 else 0)
+idMatrix = method(TypicalValue => Matrix)
+idMatrix ZZ := n -> matrix(for i from 1 to n list for j from 1 to n list if i==j then 1 else 0)
+idMatrix (ZZ, Ring) := (n, R) -> idMatrix(n)**R
 
 
 
@@ -233,7 +235,7 @@ nestedHilbSchemePoint List := modules -> (
 
 nestedQuotSchemePoint List := morphisms -> (
     -- TODO: surjectivity check 
-    F = source morphisms_0;
+    F := source morphisms_0;
     morphFT2 = morphisms_0;
     nestings = for i from 1 to length(morphisms)-1 list (
         T2 = source morphisms_i;

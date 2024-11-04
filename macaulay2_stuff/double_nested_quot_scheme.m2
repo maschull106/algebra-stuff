@@ -20,7 +20,7 @@ cellInfo (NestingCell, QuotNesting) := (cell, nest) -> new CellInfo from {Cell =
 
 nestingCell = method(TypicalValue => NestingCell, Options => {CellInfoRight=>null, CellInfoDown=>null})
 
-nestingCell (Module, Matrix) := opts -> (Q, p) -> (
+nestingCell (Module, Matrix) := opts -> (quotModule, quotMap) -> (
     -- Q <<--- QRight
     -- ^
     -- |
@@ -30,9 +30,9 @@ nestingCell (Module, Matrix) := opts -> (Q, p) -> (
 
     -- TODO: sanity checks
     return new NestingCell from {
-        TargetModule => Q,
-        QuotientMap => p,
-        HomBasis => basis Hom(ker p, Q),
+        TargetModule => quotModule,
+        QuotientMap => quotMap,
+        HomBasis => basis Hom(ker quotMap, quotModule),
         CellRight => if opts.CellInfoRight === null then null else opts.CellInfoRight.Cell,
         NestingRight => if opts.CellInfoRight === null then null else opts.CellInfoRight.Nesting,
         CellDown => if opts.CellInfoDown === null then null else opts.CellInfoDown.Cell,
@@ -97,7 +97,7 @@ constructNestingCell GraphNode := node -> (
 )
 
 doubleNestedQuotSchemePoint GraphNode := node -> (
-    F = source node.QuotMap;
+    F := source node.QuotMap;
     nestBase = constructNestingCell(node);
     return doubleNestedQuotSchemePoint(F, nestBase);
 )
@@ -216,7 +216,7 @@ tangentSpace DoubleNestedQuotSchemePoint := p -> (
             );
             if not(nextCell.CellDown === null) then (
                 targetIndex = p.CellFlatIndices#(row, col);
-                sourceIndex = p.CellFlatIndices#(row+1, col);
+                try sourceIndex = p.CellFlatIndices#(row+1, col) else error "";--(print nextCell; error);
                 C = doubleNestingConstraint(p, nextCell.NestingDown, sourceIndex, targetIndex);
                 totalC = totalC || C;
             );
@@ -246,7 +246,7 @@ nestedQuotSchemePoint2 = method(TypicalValue => DoubleNestedQuotSchemePoint)
 nestedQuotSchemePoint2 List := morphisms -> (
     -- TODO: surjectivity check
     p = morphisms_0;
-    F = source p;
+    F := source p;
     node = graphNode(p);
     nestings = for i from 1 to length(morphisms)-1 list (
         p = morphisms_i * p;
@@ -273,54 +273,66 @@ nestedHilbSchemePoint2 List := modules -> (
 
 
 
-makeNode = method(TypicalValue => GraphNode)
-makeNode (ZZ, ZZ, List, MutableHashTable) := (row, col, data, memory) -> (
-    memoryFetch = (r, c) -> (if not member((r, c), keys memory) then memory#(r, c) = makeNode(r, c, data, memory) else print "fetching from memory"; return memory#(r, c););
+makeNode = method(TypicalValue => GraphNode, Options => {Memory=>new MutableHashTable from {}})
+makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
+    memoryFetch = (r, c) -> (if not member((r, c), keys opts.Memory) then opts.Memory#(r, c) = makeNode(F, r, c, data, Memory=>opts.Memory) else print "fetching from memory"; return opts.Memory#(r, c););
     getModule = (r, c) -> (if r%2 != 0 or c%2 != 0 then error("invalid indices"); cell = data_r_c; if instance(cell, Module) then return cell; if instance(cell_0, Module) then return cell_0; error("couldn't get module"));
+    nextModule = (r, c, onRow) -> (if onRow then (r, c+2) else (r+2, c));
 
-    -- TODO: get rid of repeating code
-    if length data_row > col+1 then (
-        n = memoryFetch(row, col+2);
-        trgt = data_row_col;
-        src = getModule(row, col+2);
+    createAdjacentNode = (r, c, onRow) -> (
+        n = memoryFetch(nextModule(r, c, onRow));
+        trgt = data_r_c;
+        -- print (toString(r) | " " | toString(row));
+        -- print (toString(c) | " " | toString(col));
+        -- print "";
+        src = getModule(nextModule(r, c, onRow));
         R = ring trgt;
-        f = map(trgt, src, data_row_(col+1)**R);
-        nodeRight = nodeInfo(n, f);
-        qRight = f * n.QuotMap;
-        -- temporary save of right info
-        memory#(row, col) = graphNode(qRight, Right=>nodeRight);
-    ) else (nodeRight = null; qRight = null;);
-    if length data_col > row+1 then (
-        n = memoryFetch(row+2, col);
-        trgt = data_row_col;
-        src = getModule(row+2, col);
-        R = ring trgt;
-        mat = data_(row+1)_(col//2);
+        mat = if onRow then data_r_(c+1) else data_(r+1)_(c//2);
+        if instance(mat, List) then mat = matrix mat;
         f = map(trgt, src, mat**R);
-        down = nodeInfo(n, f);
-        qDown = f * n.QuotMap;
-    ) else (down = null; qDown = null;);
-
-    hasRightBranch = member((row, col), keys memory);
-    if not hasRightBranch and down === null then (
-        cell = data_row_col;
-        Q = cell_0; q = cell_1;
-        return graphNode(q);
+        if not isWellDefined f then error "invalid map";
+        nodeAdj = nodeInfo(n, f);
+        qAdj = f * n.QuotMap;
+    
+        -- temporary save of right info
+        if onRow then opts.Memory#(row, col) = graphNode(qAdj, Right=>nodeAdj);
+        return (nodeAdj, qAdj);
     );
+    
+    -- right branch
+    if length data_row > col+1 then createAdjacentNode(row, col, true);
+    -- down branch
+    if length data > row+1 and length data_(row+2) > col then (
+        l = createAdjacentNode(row, col, false);
+        nodeDown = l_0; qDown = l_1;
+    ) else (nodeDown = null; qDown = null;);
+
+    hasRightBranch = member((row, col), keys opts.Memory);
+    isLeaf = not hasRightBranch and nodeDown === null;
+    if isLeaf then (
+        print ("leaf" | toString(row) | toString(col));
+        cell = data_row_col;
+        QModule = cell_0; q = cell_1;
+        if instance(q, List) then q = matrix q;
+        R = ring QModule;
+        print F;
+        q = map(QModule, F, q**R);
+        return graphNode(q);
+    ) else print ("node" | toString(row) | toString(col));
 
     q = qDown;
     if hasRightBranch then (
-        n = memory#(row, col); 
+        n = opts.Memory#(row, col); 
         qRight = n.QuotMap;
         q = qRight;
         nodeRight = nodeInfo(n.NodeRight, n.MapFromRight);
         if qDown =!= null and qRight != qDown then error("noncommutative");
     ) else (nodeRight = null);
 
-    return graphNode(q, Right=>nodeRight, Down=>down);
+    return graphNode(q, Right=>nodeRight, Down=>nodeDown);
 )
 
 doubleNestedQuotSchemePoint (Module, List) := (F, data) -> (
-    node = makeNode(0, 0, data, new MutableHashTable from {});
+    node = makeNode(F, 0, 0, data, Memory=>new MutableHashTable from {});
     return doubleNestedQuotSchemePoint(node);
 )

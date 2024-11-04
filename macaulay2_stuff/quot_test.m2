@@ -146,3 +146,60 @@ quotPoint6 = doubleNestedQuotSchemePoint(node0)
 Tspace6 = tangentSpace quotPoint6
 
 
+-- {
+--     {T0,    f10,    T1,     f41,    T4},
+--     {f20,           f31},
+--     {T2,    f32,    T3},
+--     {f25},
+--     {(T5, f)}
+-- }
+
+
+
+R = QQ[x]
+F = R^2
+one = R^1/(ideal(1)**R); P = R^1/ideal(x); Q = R^1/ideal(x-1); P2 = R^1/ideal(x^2);
+PQ = R^1/ideal(x*(x-1));
+q3 = map(P++Q, F, matrix{{1,0},{0,1}}**R)
+-- q3 = map(PQ, F, matrix{{1,1}}**R)
+
+
+print "Q7"
+quotPoint7 = doubleNestedQuotSchemePoint(
+    F,
+    {
+        {one,    {{1}},    P},
+        {{{1}},           {{1,0}}},
+        {P,    {{1,0}},    (P++P, idMatrix(2))}
+    }
+)
+Tspace7 = tangentSpace quotPoint7
+
+
+print "Q8"
+quotPoint8 = doubleNestedQuotSchemePoint(
+    F,
+    {
+        {   one,    {{1}},      P           },
+        {   {{1}},              {{1}}       },
+        {   P,      {{1}},      (P2, {{1, 1}}) }
+    }
+)
+Tspace8 = tangentSpace quotPoint8
+
+
+
+print "Q10"
+p10 = nestedHilbSchemePoint2({R^1, P, one})
+T10 = tangentSpace p10
+
+
+print "Q9"
+quotPoint9 = doubleNestedQuotSchemePoint(
+    R^1,
+    {
+        {   one,    {{1}},      (P, {{1}} )          }
+    }
+)
+Tspace9 = tangentSpace quotPoint9
+
