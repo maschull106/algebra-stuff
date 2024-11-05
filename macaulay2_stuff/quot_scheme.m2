@@ -78,7 +78,7 @@ reduceOnIndex = (v, Basis, i, coords) -> (
             if v_i == 0 then return v
             else if Basis_j_i == 0 then continue
             else if leadMonomial(v_i) == leadMonomial(Basis_j_i) then (
-                c = leadCoefRatio(v_i, Basis_j_i); coords#j = coords#j + c; v = v - c*toVector(Basis_j);
+                c := leadCoefRatio(v_i, Basis_j_i); coords#j = coords#j + c; v = v - c*toVector(Basis_j);
             )
     );
     return v;
@@ -86,10 +86,10 @@ reduceOnIndex = (v, Basis, i, coords) -> (
 
 reduceToBasis = method(TypicalValue => List)
 reduceToBasis (Matrix, Matrix) := (v, Basis) -> (
-    originalV = v;
+    originalV := v;
     v = toVector(v);
-    coords = zeroMutableList(basisLength Basis);
-    makeReturn = x -> new List from coords;
+    coords := zeroMutableList(basisLength Basis);
+    makeReturn := x -> new List from coords;
     if isZero(v) then return makeReturn();
     
     for i from 0 to mSize(v)-1 do 
@@ -108,9 +108,9 @@ inclusionMap = (Target, Source) -> try inducedMap(Target, Source) else (print "w
 
 
 asMorphism = (v, Target, Source) -> (
-    m = numgens Source;
-    n = numgens Target;
-    M = for i from 0 to n-1 list for j from 0 to m-1 list v_(j*n+i);
+    m := numgens Source;
+    n := numgens Target;
+    M := for i from 0 to n-1 list for j from 0 to m-1 list v_(j*n+i);
     return map(Target, Source, M);
 )
 
@@ -131,15 +131,15 @@ quotNesting (Module, Module, Matrix, Matrix) := (T2, T1, morphFT2, morphT2T1) ->
     if not isSurjective morphT2T1 then error("Quotient should be surjective");
     if not isSurjective morphFT2 then error("Quotient should be surjective");
 
-    quot2 = morphFT2;
-    quot1 = morphT2T1 * morphFT2;
-    K2 = ker quot2;
-    K1 = ker quot1;
+    quot2 := morphFT2;
+    quot1 := morphT2T1 * morphFT2;
+    K2 := ker quot2;
+    K1 := ker quot1;
 
     -- psi: K2 -> K1
     -- phi: T2 -> T1
-    phi = morphT2T1;
-    psi = inclusionMap(K1, K2);
+    phi := morphT2T1;
+    psi := inclusionMap(K1, K2);
 
     return new QuotNesting from {
         ModuleSource => T2,
@@ -163,30 +163,30 @@ ConstraintsCouple = new Type of HashTable
 nestedQuotTangentConstraints = method(TypicalValue => ConstraintsCouple)
 
 nestedQuotTangentConstraints QuotNesting := nest -> (
-    m1 = basisLength nest.HomBasisTarget;
-    m2 = basisLength nest.HomBasisSource;
-    m = m1 + m2;
-    n = basisLength nest.HomCrossBasis;
+    m1 := basisLength nest.HomBasisTarget;
+    m2 := basisLength nest.HomBasisSource;
+    m := m1 + m2;
+    n := basisLength nest.HomCrossBasis;
 
     -- C = zeroMutableMatrix(n, m);
 
     -- H = Hom(nest.KernelSource, nest.ModuleTarget);
-    psiCompose = v -> (
-        fK1T1 = asMorphism(v, nest.ModuleTarget, nest.KernelTarget);
-        fK2T1 = fK1T1 * nest.Psi;
-        coords = reduceToBasis(fK2T1, nest.HomCrossBasis);
+    psiCompose := v -> (
+        fK1T1 := asMorphism(v, nest.ModuleTarget, nest.KernelTarget);
+        fK2T1 := fK1T1 * nest.Psi;
+        coords := reduceToBasis(fK2T1, nest.HomCrossBasis);
         return coords;
     );
-    phiCompose = v -> (
-        fK2T2 = asMorphism(v, nest.ModuleSource, nest.KernelSource);
-        fK2T1 = - nest.Phi * fK2T2;
-        coords = reduceToBasis(fK2T1, nest.HomCrossBasis);
+    phiCompose := v -> (
+        fK2T2 := asMorphism(v, nest.ModuleSource, nest.KernelSource);
+        fK2T1 := - nest.Phi * fK2T2;
+        coords := reduceToBasis(fK2T1, nest.HomCrossBasis);
         return coords;
     );
 
-    C1 = for i from 0 to m1-1 list psiCompose(nest.HomBasisTarget_i);
+    C1 := for i from 0 to m1-1 list psiCompose(nest.HomBasisTarget_i);
 
-    C2 = for i from 0 to m2-1 list phiCompose(nest.HomBasisSource_i);
+    C2 := for i from 0 to m2-1 list phiCompose(nest.HomBasisSource_i);
 
     if length C1 == 0 then C1 = {{}};
     if length C2 == 0 then C2 = {{}};

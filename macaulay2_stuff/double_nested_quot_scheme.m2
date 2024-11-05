@@ -66,33 +66,30 @@ constructNestingCell = method(TypicalValue => NestingCell)
 constructNestingCell GraphNode := node -> (
     if node === null then return null;
 
-    -- TODO: get rid of repeating code
-    if not instance(cellsRight, List) then cellsRight = {};
-    cellRight = if node.NodeRight === null then null else constructNestingCell(node.NodeRight);
-    cellsRight = append(cellsRight, cellRight);
-    cellDown = if node.NodeDown === null then null else constructNestingCell(node.NodeDown);
-    cellRight = cellsRight_-1;
-    cellsRight = drop(cellsRight, -1);
+    cellRight := if node.NodeRight === null then null else constructNestingCell(node.NodeRight);
+    cellDown := if node.NodeDown === null then null else constructNestingCell(node.NodeDown);
 
+    nestingRight = null;
     if not(node.MapFromRight === null) then (
-        morph = node.MapFromRight;
+        morph := node.MapFromRight;
         T2 := source morph;
         T1 := target morph;
-        morphFT2 = node.NodeRight.QuotMap;
+        morphFT2 := node.NodeRight.QuotMap;
         nestingRight = quotNesting(T2, T1, morphFT2, morph);
-    ) else nestingRight = null;
-    infoRight = if cellRight === null then null else cellInfo(cellRight, nestingRight);
+    );
+    infoRight := if cellRight === null then null else cellInfo(cellRight, nestingRight);
 
+    nestingDown = null;
     if not(node.MapFromDown === null) then (
-        morph = node.MapFromDown;
+        morph := node.MapFromDown;
         T2 := source morph;
         T1 := target morph;
-        morphFT2 = node.NodeDown.QuotMap;
+        morphFT2 := node.NodeDown.QuotMap;
         nestingDown = quotNesting(T2, T1, morphFT2, morph);
-    ) else nestingDown = null;
-    infoDown = if cellDown === null then null else cellInfo(cellDown, nestingDown);
+    );
+    infoDown := if cellDown === null then null else cellInfo(cellDown, nestingDown);
 
-    cell = nestingCell(target node.QuotMap, node.QuotMap, CellInfoRight=>infoRight, CellInfoDown=>infoDown);
+    cell := nestingCell(target node.QuotMap, node.QuotMap, CellInfoRight=>infoRight, CellInfoDown=>infoDown);
     return cell;
 )
 
@@ -107,12 +104,12 @@ doubleNestedQuotSchemePoint GraphNode := node -> (
 constructNestingArrays = method(TypicalValue => List, Options => {OnRows => true})
 
 constructNestingArrays NestingCell := opts -> nestCell -> (
-    nextArray = nestBase;
-    arrays = while not(nextArray === null) list (
-        nextCell = nextArray;
+    nextArray := nestBase;
+    arrays := while not(nextArray === null) list (
+        nextCell := nextArray;
         nextArray = nextArray#(if opts.OnRows then CellDown else CellRight);
         while not(nextCell === null) list (
-            nesting = nextCell#(if opts.OnRows then NestingRight else NestingDown);
+            nesting := nextCell#(if opts.OnRows then NestingRight else NestingDown);
             nextCell = nextCell#(if opts.OnRows then CellRight else CellDown);
             if nesting === null then break;
             nesting
@@ -147,11 +144,11 @@ iterateCols NestingCell := opts -> nestBase -> return iterateArrays(nestBase, On
 iterateArrays NestingCell := opts -> nestBase -> (
     opts.PreOp();
 
-    nextRow = nestBase;
-    row = 0;
+    nextRow := nestBase;
+    row := 0;
     while not(nextRow === null) do (
-        nextCell = nextRow;
-        col = 0;
+        nextCell := nextRow;
+        col := 0;
         while not(nextCell === null) do (
             if opts.OnRows then opts.LoopOp(nextCell, row, col) else opts.LoopOp(nextCell, col, row);
             col = col+1;
@@ -167,16 +164,16 @@ iterateArrays NestingCell := opts -> nestBase -> (
 homBasesLengths = method(TypicalValue => List)
 
 homBasesLengths NestingCell := nestBase -> (
-    lengths = {};
-    lengthsCumulative = {};
-    flatIndices = new MutableHashTable from {};
+    lengths := {};
+    lengthsCumulative := {};
+    flatIndices := new MutableHashTable from {};
 
     iterateRows(
         nestBase, 
         LoopOp => (cell, row, col) -> (
                 flatIndices#(row, col) = length(lengths);
                 lengthsCumulative = append(lengthsCumulative, sum(lengths));
-                lengths = append(lengths, basisLength(nextCell.HomBasis));
+                lengths = append(lengths, basisLength(cell.HomBasis));
             )
         );
     lengthsCumulative = append(lengthsCumulative, sum(lengths));
@@ -187,10 +184,10 @@ homBasesLengths NestingCell := nestBase -> (
 doubleNestingConstraint = method(TypicalValue => Matrix)
 
 doubleNestingConstraint (DoubleNestedQuotSchemePoint, QuotNesting, ZZ, ZZ) := (p, nesting, sourceIndex, targetIndex) -> (
-    totalM = p.BasisLengthsCumulative_-1;
-    constr = nestedQuotTangentConstraints(nesting);
-    n = numrows constr.ConstraintOnSource;
-    C = zeroMutableMatrix(n, totalM);
+    totalM := p.BasisLengthsCumulative_-1;
+    constr := nestedQuotTangentConstraints(nesting);
+    n := numrows constr.ConstraintOnSource;
+    C := zeroMutableMatrix(n, totalM);
     matrixWriteSlice(C, 0, p.BasisLengthsCumulative_sourceIndex, constr.ConstraintOnSource);
     matrixWriteSlice(C, 0, p.BasisLengthsCumulative_targetIndex, constr.ConstraintOnTarget);
     return new Matrix from C;
@@ -198,26 +195,26 @@ doubleNestingConstraint (DoubleNestedQuotSchemePoint, QuotNesting, ZZ, ZZ) := (p
 
 
 tangentSpace DoubleNestedQuotSchemePoint := p -> (
-    totalM = p.BasisLengthsCumulative_-1;
-    totalC = zeroMatrix(0, totalM);
+    totalM := p.BasisLengthsCumulative_-1;
+    totalC := zeroMatrix(0, totalM);
 
-    nextRow = p.NestingBase;
-    row = 0;
+    nextRow := p.NestingBase;
+    row := 0;
     while not(nextRow === null) do (
-        nextCell = nextRow;
-        col = 0;
+        nextCell := nextRow;
+        col := 0;
         while not(nextCell === null) do (
             -- nesting to the right
             if not(nextCell.CellRight === null) then (
-                targetIndex = p.CellFlatIndices#(row, col);
-                sourceIndex = p.CellFlatIndices#(row, col+1);
-                C = doubleNestingConstraint(p, nextCell.NestingRight, sourceIndex, targetIndex);
+                targetIndex := p.CellFlatIndices#(row, col);
+                sourceIndex := p.CellFlatIndices#(row, col+1);
+                C := doubleNestingConstraint(p, nextCell.NestingRight, sourceIndex, targetIndex);
                 totalC = totalC || C;
             );
             if not(nextCell.CellDown === null) then (
-                targetIndex = p.CellFlatIndices#(row, col);
-                sourceIndex = p.CellFlatIndices#(row+1, col);
-                C = doubleNestingConstraint(p, nextCell.NestingDown, sourceIndex, targetIndex);
+                targetIndex := p.CellFlatIndices#(row, col);
+                sourceIndex := p.CellFlatIndices#(row+1, col);
+                C := doubleNestingConstraint(p, nextCell.NestingDown, sourceIndex, targetIndex);
                 totalC = totalC || C;
             );
 
@@ -245,9 +242,9 @@ matrixWriteSlice = (M, rowStart, colStart, Mslice) -> (
 nestedQuotSchemePoint2 = method(TypicalValue => DoubleNestedQuotSchemePoint)
 nestedQuotSchemePoint2 List := morphisms -> (
     -- TODO: surjectivity check
-    p = morphisms_0;
+    p := morphisms_0;
     F := source p;
-    node = graphNode(p);
+    node := graphNode(p);
     nestings = for i from 1 to length(morphisms)-1 list (
         p = morphisms_i * p;
         node = graphNode(p, Right=>nodeInfo(node, morphisms_i));
@@ -260,9 +257,9 @@ nestedHilbSchemePoint2 = method(TypicalValue => DoubleNestedQuotSchemePoint)
 
 nestedHilbSchemePoint2 List := modules -> (
     R := ring modules_0;
-    r = rank modules_0;
-    idMat = idMatrix(r)**R;
-    morphisms = for i from 0 to length(modules)-2 list (
+    r := rank modules_0;
+    idMat := idMatrix(r)**R;
+    morphisms := for i from 0 to length(modules)-2 list (
         map(modules_(i+1), modules_i, idMat)
     );
     return nestedQuotSchemePoint2(morphisms);
@@ -275,62 +272,58 @@ nestedHilbSchemePoint2 List := modules -> (
 
 makeNode = method(TypicalValue => GraphNode, Options => {Memory=>new MutableHashTable from {}})
 makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
-    memoryFetch = (r, c) -> (if not member((r, c), keys opts.Memory) then opts.Memory#(r, c) = makeNode(F, r, c, data, Memory=>opts.Memory); return opts.Memory#(r, c););
-    getModule = (r, c) -> (if r%2 != 0 or c%2 != 0 then error("invalid indices"); cell = data_r_c; if instance(cell, Module) then return cell; if instance(cell_0, Module) then return cell_0; error("couldn't get module"));
-    nextModule = (r, c, onRow) -> (if onRow then (r, c+2) else (r+2, c));
+    memoryFetch := (r, c) -> (if not member((r, c), keys opts.Memory) then opts.Memory#(r, c) = makeNode(F, r, c, data, Memory=>opts.Memory); return opts.Memory#(r, c););
+    getModule := (r, c) -> (if r%2 != 0 or c%2 != 0 then error("invalid indices"); cell = data_r_c; if instance(cell, Module) then return cell; if instance(cell_0, Module) then return cell_0; error("couldn't get module"));
+    nextModule := (r, c, onRow) -> (if onRow then (r, c+2) else (r+2, c));
 
     createAdjacentNode = (r, c, onRow) -> (
-        n = memoryFetch(nextModule(r, c, onRow));
-        trgt = data_r_c;
-        -- print (toString(r) | " " | toString(row));
-        -- print (toString(c) | " " | toString(col));
-        -- print "";
-        src = getModule(nextModule(r, c, onRow));
+        n := memoryFetch(nextModule(r, c, onRow));
+        trgt := data_r_c;
+        src := getModule(nextModule(r, c, onRow));
         R := ring trgt;
-        mat = if onRow then data_r_(c+1) else data_(r+1)_(c//2);
+        mat := if onRow then data_r_(c+1) else data_(r+1)_(c//2);
         if instance(mat, List) then mat = matrix mat;
-        f = map(trgt, src, mat**R);
+        f := map(trgt, src, mat**R);
         if not isWellDefined f then error "invalid map";
-        nodeAdj = nodeInfo(n, f);
-        qAdj = f * n.QuotMap;
+        nodeAdj := nodeInfo(n, f);
+        qAdj := f * n.QuotMap;
     
         -- temporary save of right info
-        if onRow then opts.Memory#(row, col) = graphNode(qAdj, Right=>nodeAdj);
+        -- if onRow then opts.Memory#(row, col) = graphNode(qAdj, Right=>nodeAdj);
         return (nodeAdj, qAdj);
     );
     
     -- right branch
-    if length data_row > col+1 then createAdjacentNode(row, col, true);
+    nodeRight := null; qRight := null;
+    if length data_row > col+1 then (
+        l := createAdjacentNode(row, col, true);
+        nodeRight = l_0; qRight = l_1;
+    );
     -- down branch
+    nodeDown := null; qDown := null;
     if length data > row+1 and length data_(row+2) > col then (
-        l = createAdjacentNode(row, col, false);
+        l := createAdjacentNode(row, col, false);
         nodeDown = l_0; qDown = l_1;
-    ) else (nodeDown = null; qDown = null;);
+    );
 
-    hasRightBranch = member((row, col), keys opts.Memory);
-    isLeaf = not hasRightBranch and nodeDown === null;
+    -- hasRightBranch = member((row, col), keys opts.Memory);
+    isLeaf := nodeRight === null and nodeDown === null;
     if isLeaf then (
-        cell = data_row_col;
-        QModule = cell_0; q = cell_1;
+        cell := data_row_col;
+        QModule := cell_0; q := cell_1;
         if instance(q, List) then q = matrix q;
         R := ring QModule;
         q = map(QModule, F, q**R);
         return graphNode(q);
     );
 
-    q = qDown;
-    if hasRightBranch then (
-        n = opts.Memory#(row, col); 
-        qRight = n.QuotMap;
-        q = qRight;
-        nodeRight = nodeInfo(n.NodeRight, n.MapFromRight);
-        if qDown =!= null and qRight != qDown then error("noncommutative");
-    ) else (nodeRight = null);
+    if qRight =!= null and qDown =!= null and qRight != qDown then error("noncommutative");
+    q := if qRight =!= null then qRight else qDown;
 
     return graphNode(q, Right=>nodeRight, Down=>nodeDown);
 )
 
 doubleNestedQuotSchemePoint (Module, List) := (F, data) -> (
-    node = makeNode(F, 0, 0, data, Memory=>new MutableHashTable from {});
+    node := makeNode(F, 0, 0, data, Memory=>new MutableHashTable from {});
     return doubleNestedQuotSchemePoint(node);
 )
