@@ -287,9 +287,6 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
         if not isWellDefined f then error "invalid map";
         nodeAdj := nodeInfo(n, f);
         qAdj := f * n.QuotMap;
-    
-        -- temporary save of right info
-        -- if onRow then opts.Memory#(row, col) = graphNode(qAdj, Right=>nodeAdj);
         return (nodeAdj, qAdj);
     );
     
@@ -306,7 +303,6 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
         nodeDown = l_0; qDown = l_1;
     );
 
-    -- hasRightBranch = member((row, col), keys opts.Memory);
     isLeaf := nodeRight === null and nodeDown === null;
     if isLeaf then (
         cell := data_row_col;

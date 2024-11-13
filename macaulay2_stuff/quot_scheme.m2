@@ -130,6 +130,7 @@ quotNesting (Module, Module, Matrix, Matrix) := (T2, T1, morphFT2, morphT2T1) ->
     if dim(T2) > 0 or dim(T1) > 0 then error "the quotients must be zero dimensional";
     if not isSurjective morphT2T1 then error("Quotient should be surjective");
     if not isSurjective morphFT2 then error("Quotient should be surjective");
+    if not(source morphT2T1 == T2 and target morphT2T1 == T1 and target morphFT2 == T2) then error("Incorrect maps");
 
     quot2 := morphFT2;
     quot1 := morphT2T1 * morphFT2;
