@@ -10,6 +10,9 @@ CellInfo = new Type of HashTable
 GraphNode = new Type of HashTable
 NodeInfo = new Type of HashTable
 
+QuotKernelNode = new Type of MutableHashTable
+KernelNodeInfo = new Type of HashTable
+
 
 doubleNestedQuotSchemePoint = method(TypicalValue => DoubleNestedQuotSchemePoint)
 
@@ -59,6 +62,75 @@ graphNode Matrix := opts -> quotMap -> (
         QuotMap => quotMap
     }
 )
+
+
+
+
+
+
+kernelNodeInfo = method(TypicalValue => KernelNodeInfo)
+
+kernelNodeInfo (QuotKernelNode, Matrix) := (n, B) -> new KernelNodeInfo from {Node=>n, KernelMat=>B}
+
+-- quotKernelNode = method(TypicalValue => QuotKernelNode, Options => {Right=>null, Down=>null})
+
+quotKernelNode = {Right=>null, Down=>null} >> opts -> () -> (
+    return new QuotKernelNode from {
+        NodeRight => if opts.Right === null then null else opts.Right.Node,
+        KernelMatRight => if opts.Right === null then null else opts.Right.KernelMat,
+        NodeDown => if opts.Down === null then null else opts.Down.Node,
+        KernelMatDown => if opts.Down === null then null else opts.Down.KernelMat,
+        GraphNodeConversion => null
+    }
+)
+
+
+isLeafNode = method(TypicalValue => Boolean)
+isLeafNode QuotKernelNode := n -> (n.NodeRight === null and n.NodeDown === null)
+
+
+kernelNodeToGraphNode = method(TypicalValue => GraphNode)
+
+kernelNodeToGraphNode (Matrix, QuotKernelNode) := (rootKernelMat, n) -> (
+    if n.GraphNodeConversion =!= null then return n.GraphNodeConversion;
+    
+    K := image rootKernelMat;
+    F := target rootKernelMat;
+    Q := F/K;
+    q := inducedMap(Q, F);
+
+    if isLeafNode(n) then (
+        conversion := graphNode(q);
+        n.GraphNodeConversion = conversion;
+        return conversion;
+    );
+
+    infoRight := null;
+    infoDown := null;
+    if n.NodeRight =!= null then (
+        nodeRight := kernelNodeToGraphNode(rootKernelMat*n.KernelMatRight, n.NodeRight);
+        f := inducedMap(Q, target nodeRight.QuotMap);
+        infoRight = nodeInfo(nodeRight, f);
+    );
+    if n.NodeDown =!= null then (
+        nodeDown := kernelNodeToGraphNode(rootKernelMat*n.KernelMatDown, n.NodeDown);
+        f := inducedMap(Q, target nodeDown.QuotMap);
+        infoDown = nodeInfo(nodeDown, f);
+    );
+
+    conversion := graphNode(q, Right=>infoRight, Down=>infoDown);
+    n.GraphNodeConversion = conversion;
+    return conversion;
+)
+
+
+doubleNestedQuotSchemePoint (Matrix, QuotKernelNode) := (rootKernelMat, n) -> (
+    gNode = kernelNodeToGraphNode(rootKernelMat, n);
+    return doubleNestedQuotSchemePoint(gNode);
+)
+
+
+
 
 
 constructNestingCell = method(TypicalValue => NestingCell)
@@ -119,9 +191,9 @@ constructNestingArrays NestingCell := opts -> nestCell -> (
 )
 
 doubleNestedQuotSchemePoint (Module, NestingCell) := (F, nestBase) -> (
-    rows = constructNestingArrays(nestBase, OnRows=>true);
-    cols = constructNestingArrays(nestBase, OnRows=>false);
-    l = homBasesLengths(nestBase);
+    rows := constructNestingArrays(nestBase, OnRows=>true);
+    cols := constructNestingArrays(nestBase, OnRows=>false);
+    l := homBasesLengths(nestBase);
 
     return new DoubleNestedQuotSchemePoint from {
         ConstructionSheaf => F,
@@ -284,7 +356,7 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
         mat := if onRow then data_r_(c+1) else data_(r+1)_(c//2);
         if instance(mat, List) then mat = matrix mat;
         f := map(trgt, src, mat**R);
-        if not isWellDefined f then error "invalid map";
+        if not isWellDefined f then (print f; print (source f); print (target f); error "invalid map";);
         nodeAdj := nodeInfo(n, f);
         qAdj := f * n.QuotMap;
         return (nodeAdj, qAdj);
@@ -322,4 +394,22 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
 doubleNestedQuotSchemePoint (Module, List) := (F, data) -> (
     node := makeNode(F, 0, 0, data, Memory=>new MutableHashTable from {});
     return doubleNestedQuotSchemePoint(node);
+)
+
+
+
+
+
+YoungDiagram = new Type of List
+
+getShape = method(TypicalValue=>YoungDiagram)
+getBox = method(TypicalValue=>NestingCell)
+
+getShape DoubleNestedQuotSchemePoint := p -> (
+    return for row in p.NestedRows list length(row)+1;
+)
+
+getBox (DoubleNestedQuotSchemePoint, ZZ, ZZ) := (p, i, j) -> (
+    -- TODO: correct (is wrong now)
+    return p.NestedRows_j_i;
 )

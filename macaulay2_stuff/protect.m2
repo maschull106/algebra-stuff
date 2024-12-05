@@ -46,3 +46,7 @@ protect CellFlatIndices
 protect PreOp
 protect LoopOp
 protect PostOp
+protect KernelMat
+protect KernelMatRight
+protect KernelMatDown
+protect GraphNodeConversion
