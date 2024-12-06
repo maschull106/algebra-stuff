@@ -403,13 +403,27 @@ doubleNestedQuotSchemePoint (Module, List) := (F, data) -> (
 YoungDiagram = new Type of List
 
 getShape = method(TypicalValue=>YoungDiagram)
-getBox = method(TypicalValue=>NestingCell)
+getBoxModule = method(TypicalValue=>Module)
+getBoxQuotientMap = method(TypicalValue=>Matrix)
 
 getShape DoubleNestedQuotSchemePoint := p -> (
     return for row in p.NestedRows list length(row)+1;
 )
 
-getBox (DoubleNestedQuotSchemePoint, ZZ, ZZ) := (p, i, j) -> (
-    -- TODO: correct (is wrong now)
-    return p.NestedRows_j_i;
+getBoxModule (DoubleNestedQuotSchemePoint, ZZ, ZZ) := (p, i, j) -> (
+    -- TODO: make sure it can handle corner cases like simple nesting
+    row := p.NestedRows_j;
+    if i == 0 then (
+        return (row_0).ModuleTarget;
+    );
+    return (row_(i-1)).ModuleSource;
+)
+
+getBoxQuotientMap (DoubleNestedQuotSchemePoint, ZZ, ZZ) := (p, i, j) -> (
+    -- TODO: make sure it can handle corner cases like simple nesting
+    row := p.NestedRows_j;
+    if i == 0 then (
+        return (row_0).QuotientTarget;
+    );
+    return (row_(i-1)).QuotientSource;
 )
