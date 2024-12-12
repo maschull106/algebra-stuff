@@ -62,8 +62,7 @@ mSize = m -> length flatten entries m;
 
 basisLength = B -> numcols B
 
-toVector = v -> vector flatten entries v; -- (transpose matrix {flatten entries v})_0;
--- toVector = v -> vector flatten entries transpose matrix entries v;
+toVector = v -> if isTable entries v then vector flatten transpose entries v else vector flatten entries v;
 
 -- reduceToBasis (Matrix, Matrix) := opts -> (v, Basis) -> (
 --     v = (transpose matrix {flatten entries phi})_0;
