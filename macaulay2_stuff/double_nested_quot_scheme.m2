@@ -427,3 +427,12 @@ getBoxQuotientMap (DoubleNestedQuotSchemePoint, ZZ, ZZ) := (p, i, j) -> (
     );
     return (row_(i-1)).QuotientSource;
 )
+
+
+diagonal = method(TypicalValue=>Module)
+diagonal Module := M -> (
+    F := ambient M;
+    A := relations M;
+    (D, P, Q) := smithNormalForm A;
+    return F/image(D);
+)
