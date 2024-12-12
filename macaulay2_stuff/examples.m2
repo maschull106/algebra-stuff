@@ -49,10 +49,16 @@ T3 = tangentSpace doubleNestedQuotSchemePoint(
 )
 
 
-B1 = matrix{{x,1},{0,x}}
-B2 = matrix{{x,0},{0,x}}
-B3 = matrix{{x,0},{0,x}}
-B4 = matrix{{x,2},{0,x}}
+-- B1 = matrix{{x,1},{0,x}}
+-- B2 = matrix{{x,-1},{0,x}}
+-- B3 = matrix{{x,-1},{0,x}}
+-- B4 = matrix{{x,1},{0,x}}
+
+p = x+1
+B1 = matrix{{x^2,p},{0,1}}
+B2 = matrix{{1,-p},{0,x^2}}
+B3 = matrix{{1,0},{0,x^2}}
+B4 = matrix{{x^2,0},{0,1}}
 rootMat = idMatrix(2, R)
 n11 = quotKernelNode()
 n01 = quotKernelNode(Right=>kernelNodeInfo(n11, B2))
@@ -60,7 +66,9 @@ n10 = quotKernelNode(Down=>kernelNodeInfo(n11, B4))
 n00 = quotKernelNode(Right=>kernelNodeInfo(n10, B3), Down=>kernelNodeInfo(n01, B1))
 quotPoint = doubleNestedQuotSchemePoint(rootMat, n00)
 Tspace = tangentSpace quotPoint
-
+M11 = diagonal getBoxModule(quotPoint, 1,1)
+M01 = diagonal getBoxModule(quotPoint, 0,1)
+M10 = diagonal getBoxModule(quotPoint, 1,0)
 
 
 
