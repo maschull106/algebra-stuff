@@ -192,6 +192,18 @@ assert (dim T == 12)
 
 
 count = count+1
+T = tangentSpace doubleNestedQuotSchemePoint(
+    R^2,
+    {
+        {one,         {{0}},            P2},
+        {{{0}},                       {{1,0}}},
+        {P2,      {{1,0}},      (P2++P2, idMatrix(2))}
+    }
+)
+assert (dim T == 10)
+
+
+count = count+1
 B1 = matrix{{x,1},{0,x}}
 B2 = matrix{{x,-1},{0,x}}
 B3 = matrix{{x,-1},{0,x}}
@@ -218,3 +230,28 @@ n10 = quotKernelNode(Down=>kernelNodeInfo(n11, B4))
 n00 = quotKernelNode(Right=>kernelNodeInfo(n10, B3), Down=>kernelNodeInfo(n01, B1))
 T = tangentSpace doubleNestedQuotSchemePoint(rootMat, n00)
 assert (dim T == 8)
+
+
+
+
+-- Double nested Quot scheme on 
+-- ┌───┬───┬───┐
+-- | 0 | 1 | 2 |
+-- ├───┼───┼───┤
+-- | 1 | 2 | 3 |
+-- ├───┼───┼───┤
+-- | 2 | 3 | 4 |
+-- └───┴───┴───┘
+
+count = count+1
+T = tangentSpace doubleNestedQuotSchemePoint(
+    R^2,
+    {
+        {one,       {{1}},      P,         {{1,0}},         P++P},
+        {{{1}},                 {{1}},                      idMat(2)},
+        {P,         {{1}},      P2,        {{1,0}},         P2++P},
+        {{{1,0}},               {{1,0}},                    idMat(2)},
+        {P++P,      idMat(2),   P2++P,      idMat(2),       (P2++P2, idMat(2))}
+    }
+)
+-- assert (dim T == 11)
