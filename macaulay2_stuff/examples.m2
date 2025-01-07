@@ -6,6 +6,7 @@ F = R^2
 zeroo = R^1/(ideal(1)**R)
 P = R^1/ideal(x)
 S = R^1/ideal(x-1)
+PS = R^1/ideal(x*(x-1))
 P2 = R^1/ideal(x^2)
 P3 = R^1/x^3
 P4 = R^1/x^4
@@ -24,9 +25,9 @@ T0 = tangentSpace doubleNestedQuotSchemePoint(
 T1 = tangentSpace doubleNestedQuotSchemePoint(
     F,
     {
-        {zeroo,         {{0,0}},            P++P},
-        {{{0,0}},                       {{1,0},{0,1}}},
-        {P++P,      {{1,0},{0,1}},      (P2++P2, idMatrix(2))}
+        {zeroo,         {{0}},            P2},
+        {{{0}},                       {{0,1}}},
+        {P2,      {{1,0}},      (P2++P2, idMatrix(2))}
     }
 )
 
@@ -48,17 +49,89 @@ T3 = tangentSpace doubleNestedQuotSchemePoint(
     }
 )
 
+T4 = tangentSpace doubleNestedQuotSchemePoint(
+    F,
+    {
+        {zeroo,     {{1}},      P,         {{1,0}},         P++P},
+        {{{1}},                 {{1}},                      idMat(2)},
+        {P,         {{1}},      P2,        {{1,0}},         P2++P},
+        {{{1,0}},               {{1,0}},                    idMat(2)},
+        {P++P,      idMat(2),   P2++P,      idMat(2),       (P2++P2, idMat(2))}
+    }
+)
+
+T5 = tangentSpace doubleNestedQuotSchemePoint(
+    F,
+    {
+        {zeroo,         {{0}},        PS},
+        {{{0}},                     {{0,1}}},
+        {PS,      {{1,0}},          (PS++PS, idMatrix(2))}
+    }
+)
+
 
 -- B1 = matrix{{x,1},{0,x}}
 -- B2 = matrix{{x,-1},{0,x}}
 -- B3 = matrix{{x,-1},{0,x}}
 -- B4 = matrix{{x,1},{0,x}}
 
-p = x+1
-B1 = matrix{{x^2,p},{0,1}}
-B2 = matrix{{1,-p},{0,x^2}}
+p = 0
+q = 1
+B1 = matrix{{x*(x-1),p},{0,1}}
+B2 = matrix{{1,-p},{0,x*(x-1)}}
+B3 = matrix{{x*(x-1),q},{0,1}}
+B4 = matrix{{1,-q},{0,x*(x-1)}}
+
+-- 1.2.1 semi free
+B1 = matrix{{x*(x-1),x},{0,1}}
+B2 = matrix{{x-2,1},{0,x-1}}
+B3 = matrix{{x*(x-1),3*x},{0,1}}
+B4 = matrix{{x-2,-1},{0,x-1}}
+
+-- 1.2.2 semi free
+u1 = 1
+u2 = 1
+B1 = matrix{{x*(x-1),u1},{0,1}}
+B2 = matrix{{x-2,u2},{0,x-1}}
+B3 = matrix{{x-1,0},{0,x-1}}
+B4 = matrix{{x*(x-2),x*u2+u1},{0,1}}
+
+-- 1.3.2 semi free
+u1 = 1
+u3 = 1  -- what if u1 = u3 ???
+B1 = matrix{{(x-1)*(x-2),u1},{0,1}}
+B2 = matrix{{1,0},{0,x*(x-1)}}
+B3 = matrix{{x-1,u3},{0,x}}
+B4 = matrix{{x-2,x*u1-u3},{0,x-1}}
+
+-- 1.3.3 semi free
+u1 = x
+B1 = matrix{{(x-1)*(x-2),u1},{0,1}}
+B2 = matrix{{1,0},{0,x^2}}
 B3 = matrix{{1,0},{0,x^2}}
-B4 = matrix{{x^2,0},{0,1}}
+B4 = matrix{{(x-1)*(x-2),x^2*u1},{0,1}}
+
+-- B1 = matrix{{x^2,u1},{0,1}}
+-- B2 = matrix{{1,0},{0,x^2}}
+-- B3 = matrix{{1,0},{0,x^2}}
+-- B4 = matrix{{x^2,x^2*u1},{0,1}}
+
+-- -- 2.2.2 semi free
+-- u1 = 0
+-- u2 = 0
+-- u3 = 1
+-- u4 = u1+u2-u3
+-- B1 = matrix{{x,u1},{0,x-1}}
+-- B2 = matrix{{x-2,u2},{0,x}}
+-- B3 = matrix{{x,u3},{0,x-1}}
+-- B4 = matrix{{x-2,u4},{0,x}}
+
+-- B1 = matrix{{x,u1},{0,x}}
+-- B2 = matrix{{x,u2},{0,x}}
+-- B3 = matrix{{x,u3},{0,x}}
+-- B4 = matrix{{x,u4},{0,x}}
+
+
 rootMat = idMatrix(2, R)
 n11 = quotKernelNode()
 n01 = quotKernelNode(Right=>kernelNodeInfo(n11, B2))
@@ -109,3 +182,7 @@ A1 = C1*QC1
 A2 = C2*QC2
 A3 = C3*QC3
 A4 = C4*QC4
+
+
+
+mmm = M -> ((D,P,Q) := smithNormalForm(relations M); return P;)

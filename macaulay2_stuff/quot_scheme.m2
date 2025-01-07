@@ -120,6 +120,7 @@ zeroMutableMatrix = (n, m) -> (new MutableMatrix from zeroMatrix(n, m))
 idMatrix = method(TypicalValue => Matrix)
 idMatrix ZZ := n -> matrix(for i from 1 to n list for j from 1 to n list if i==j then 1 else 0)
 idMatrix (ZZ, Ring) := (n, R) -> idMatrix(n)**R
+idMat = idMatrix
 
 
 
@@ -226,10 +227,10 @@ nestedHilbSchemePoint = method(TypicalValue => NestedQuotSchemePoint)
 
 nestedHilbSchemePoint List := modules -> (
     R := ring modules_0;
-    r = rank modules_0;
-    idMat = idMatrix(r)**R;
+    r := rank modules_0;
+    idR := idMatrix(r)**R;
     morphisms = for i from 0 to length(modules)-2 list (
-        map(modules_(i+1), modules_i, idMat)
+        map(modules_(i+1), modules_i, idR)
     );
     return nestedQuotSchemePoint(morphisms);
 )

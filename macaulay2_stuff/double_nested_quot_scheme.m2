@@ -330,9 +330,9 @@ nestedHilbSchemePoint2 = method(TypicalValue => DoubleNestedQuotSchemePoint)
 nestedHilbSchemePoint2 List := modules -> (
     R := ring modules_0;
     r := rank modules_0;
-    idMat := idMatrix(r)**R;
+    idR := idMatrix(r)**R;
     morphisms := for i from 0 to length(modules)-2 list (
-        map(modules_(i+1), modules_i, idMat)
+        map(modules_(i+1), modules_i, idR)
     );
     return nestedQuotSchemePoint2(morphisms);
 )
@@ -436,3 +436,13 @@ diagonal Module := M -> (
     (D, P, Q) := smithNormalForm A;
     return F/image(D);
 )
+
+
+
+-- toString DoubleNestedQuotSchemePoint := p -> (
+--     for i from 1 to length(p.NestedRows) list 0;
+-- )
+
+-- net DoubleNestedQuotSchemePoint := p -> (
+--     for i from 1 to length(p.NestedRows) list for j from 1 to lengthnet(getBoxModule());
+-- )
