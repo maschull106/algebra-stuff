@@ -7,7 +7,7 @@ DoubleNestedQuotSchemeTangentSpace = new Type of NestedQuotSchemeTangentSpace
 NestingCell = new Type of HashTable
 CellInfo = new Type of HashTable
 
-GraphNode = new Type of HashTable
+QuotNode = new Type of HashTable
 NodeInfo = new Type of HashTable
 
 QuotKernelNode = new Type of MutableHashTable
@@ -47,14 +47,14 @@ nestingCell (Module, Matrix) := opts -> (quotModule, quotMap) -> (
 
 nodeInfo = method(TypicalValue => NodeInfo)
 
-nodeInfo (GraphNode, Matrix) := (n, f) -> new NodeInfo from {Node=>n, MapFromNode=>f}
+nodeInfo (QuotNode, Matrix) := (n, f) -> new NodeInfo from {Node=>n, MapFromNode=>f}
 
-graphNode = method(TypicalValue => GraphNode, Options => {Right=>null, Down=>null})
+quotNode = method(TypicalValue => QuotNode, Options => {Right=>null, Down=>null})
 
 
--- graphNode = {Right=>null, Down=>null, Quot=>null} >> opts -> () -> (
-graphNode Matrix := opts -> quotMap -> (
-    return new GraphNode from {
+-- quotNode = {Right=>null, Down=>null, Quot=>null} >> opts -> () -> (
+quotNode Matrix := opts -> quotMap -> (
+    return new QuotNode from {
         NodeRight => if opts.Right === null then null else opts.Right.Node,
         MapFromRight => if opts.Right === null then null else opts.Right.MapFromNode,
         NodeDown => if opts.Down === null then null else opts.Down.Node,
@@ -80,7 +80,7 @@ quotKernelNode = {Right=>null, Down=>null} >> opts -> () -> (
         KernelMatRight => if opts.Right === null then null else opts.Right.KernelMat,
         NodeDown => if opts.Down === null then null else opts.Down.Node,
         KernelMatDown => if opts.Down === null then null else opts.Down.KernelMat,
-        GraphNodeConversion => null
+        QuotNodeConversion => null
     }
 )
 
@@ -89,43 +89,45 @@ isLeafNode = method(TypicalValue => Boolean)
 isLeafNode QuotKernelNode := n -> (n.NodeRight === null and n.NodeDown === null)
 
 
-kernelNodeToGraphNode = method(TypicalValue => GraphNode)
+kernelNodeToQuotNode = method(TypicalValue => QuotNode)
 
-kernelNodeToGraphNode (Matrix, QuotKernelNode) := (rootKernelMat, n) -> (
-    if n.GraphNodeConversion =!= null then return n.GraphNodeConversion;
+kernelNodeToQuotNode (Matrix, QuotKernelNode) := (rootKernelMat, n) -> (
+    if n.QuotNodeConversion =!= null then return n.QuotNodeConversion;
     
     K := image rootKernelMat;
     F := target rootKernelMat;
     Q := F/K;
     q := inducedMap(Q, F);
 
+    conversion := null;
     if isLeafNode(n) then (
-        conversion := graphNode(q);
-        n.GraphNodeConversion = conversion;
+        conversion = quotNode(q);
+        n.QuotNodeConversion = conversion;
         return conversion;
     );
 
     infoRight := null;
     infoDown := null;
+    f := null;
     if n.NodeRight =!= null then (
-        nodeRight := kernelNodeToGraphNode(rootKernelMat*n.KernelMatRight, n.NodeRight);
-        f := inducedMap(Q, target nodeRight.QuotMap);
+        nodeRight := kernelNodeToQuotNode(rootKernelMat*n.KernelMatRight, n.NodeRight);
+        f = inducedMap(Q, target nodeRight.QuotMap);
         infoRight = nodeInfo(nodeRight, f);
     );
     if n.NodeDown =!= null then (
-        nodeDown := kernelNodeToGraphNode(rootKernelMat*n.KernelMatDown, n.NodeDown);
-        f := inducedMap(Q, target nodeDown.QuotMap);
+        nodeDown := kernelNodeToQuotNode(rootKernelMat*n.KernelMatDown, n.NodeDown);
+        f = inducedMap(Q, target nodeDown.QuotMap);
         infoDown = nodeInfo(nodeDown, f);
     );
 
-    conversion := graphNode(q, Right=>infoRight, Down=>infoDown);
-    n.GraphNodeConversion = conversion;
+    conversion = quotNode(q, Right=>infoRight, Down=>infoDown);
+    n.QuotNodeConversion = conversion;
     return conversion;
 )
 
 
 doubleNestedQuotSchemePoint (Matrix, QuotKernelNode) := (rootKernelMat, n) -> (
-    gNode = kernelNodeToGraphNode(rootKernelMat, n);
+    gNode := kernelNodeToQuotNode(rootKernelMat, n);
     return doubleNestedQuotSchemePoint(gNode);
 )
 
@@ -135,28 +137,32 @@ doubleNestedQuotSchemePoint (Matrix, QuotKernelNode) := (rootKernelMat, n) -> (
 
 constructNestingCell = method(TypicalValue => NestingCell)
 
-constructNestingCell GraphNode := node -> (
+constructNestingCell QuotNode := node -> (
     if node === null then return null;
 
     cellRight := if node.NodeRight === null then null else constructNestingCell(node.NodeRight);
     cellDown := if node.NodeDown === null then null else constructNestingCell(node.NodeDown);
 
-    nestingRight = null;
+    nestingRight := null;
+    morph := null;
+    T1 := null;
+    T2 := null;
+    morphFT2 := null;
     if not(node.MapFromRight === null) then (
-        morph := node.MapFromRight;
-        T2 := source morph;
-        T1 := target morph;
-        morphFT2 := node.NodeRight.QuotMap;
+        morph = node.MapFromRight;
+        T2 = source morph;
+        T1 = target morph;
+        morphFT2 = node.NodeRight.QuotMap;
         nestingRight = quotNesting(T2, T1, morphFT2, morph);
     );
     infoRight := if cellRight === null then null else cellInfo(cellRight, nestingRight);
 
     nestingDown = null;
     if not(node.MapFromDown === null) then (
-        morph := node.MapFromDown;
-        T2 := source morph;
-        T1 := target morph;
-        morphFT2 := node.NodeDown.QuotMap;
+        morph = node.MapFromDown;
+        T2 = source morph;
+        T1 = target morph;
+        morphFT2 = node.NodeDown.QuotMap;
         nestingDown = quotNesting(T2, T1, morphFT2, morph);
     );
     infoDown := if cellDown === null then null else cellInfo(cellDown, nestingDown);
@@ -165,7 +171,7 @@ constructNestingCell GraphNode := node -> (
     return cell;
 )
 
-doubleNestedQuotSchemePoint GraphNode := node -> (
+doubleNestedQuotSchemePoint QuotNode := node -> (
     F := source node.QuotMap;
     nestBase = constructNestingCell(node);
     return doubleNestedQuotSchemePoint(F, nestBase);
@@ -272,21 +278,24 @@ tangentSpace DoubleNestedQuotSchemePoint := p -> (
 
     nextRow := p.NestingBase;
     row := 0;
+    targetIndex := null;
+    sourceIndex := null;
+    C := null;
     while not(nextRow === null) do (
         nextCell := nextRow;
         col := 0;
         while not(nextCell === null) do (
             -- nesting to the right
             if not(nextCell.CellRight === null) then (
-                targetIndex := p.CellFlatIndices#(row, col);
-                sourceIndex := p.CellFlatIndices#(row, col+1);
-                C := doubleNestingConstraint(p, nextCell.NestingRight, sourceIndex, targetIndex);
+                targetIndex = p.CellFlatIndices#(row, col);
+                sourceIndex = p.CellFlatIndices#(row, col+1);
+                C = doubleNestingConstraint(p, nextCell.NestingRight, sourceIndex, targetIndex);
                 totalC = totalC || C;
             );
             if not(nextCell.CellDown === null) then (
-                targetIndex := p.CellFlatIndices#(row, col);
-                sourceIndex := p.CellFlatIndices#(row+1, col);
-                C := doubleNestingConstraint(p, nextCell.NestingDown, sourceIndex, targetIndex);
+                targetIndex = p.CellFlatIndices#(row, col);
+                sourceIndex = p.CellFlatIndices#(row+1, col);
+                C = doubleNestingConstraint(p, nextCell.NestingDown, sourceIndex, targetIndex);
                 totalC = totalC || C;
             );
 
@@ -316,10 +325,10 @@ nestedQuotSchemePoint2 List := morphisms -> (
     -- TODO: surjectivity check
     p := morphisms_0;
     F := source p;
-    node := graphNode(p);
+    node := quotNode(p);
     nestings = for i from 1 to length(morphisms)-1 list (
         p = morphisms_i * p;
-        node = graphNode(p, Right=>nodeInfo(node, morphisms_i));
+        node = quotNode(p, Right=>nodeInfo(node, morphisms_i));
     );
     return doubleNestedQuotSchemePoint(node);
 )
@@ -342,7 +351,7 @@ nestedHilbSchemePoint2 List := modules -> (
 
 
 
-makeNode = method(TypicalValue => GraphNode, Options => {Memory=>new MutableHashTable from {}})
+makeNode = method(TypicalValue => QuotNode, Options => {Memory=>new MutableHashTable from {}})
 makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
     memoryFetch := (r, c) -> (if not member((r, c), keys opts.Memory) then opts.Memory#(r, c) = makeNode(F, r, c, data, Memory=>opts.Memory); return opts.Memory#(r, c););
     getModule := (r, c) -> (if r%2 != 0 or c%2 != 0 then error("invalid indices"); cell = data_r_c; if instance(cell, Module) then return cell; if instance(cell_0, Module) then return cell_0; error("couldn't get module"));
@@ -363,32 +372,33 @@ makeNode (Module, ZZ, ZZ, List) := opts -> (F, row, col, data) -> (
     );
     
     -- right branch
-    nodeRight := null; qRight := null;
+    nodeRight := null; qRight := null; l := null;
     if length data_row > col+1 then (
-        l := createAdjacentNode(row, col, true);
+        l = createAdjacentNode(row, col, true);
         nodeRight = l_0; qRight = l_1;
     );
     -- down branch
     nodeDown := null; qDown := null;
     if length data > row+1 and length data_(row+2) > col then (
-        l := createAdjacentNode(row, col, false);
+        l = createAdjacentNode(row, col, false);
         nodeDown = l_0; qDown = l_1;
     );
 
     isLeaf := nodeRight === null and nodeDown === null;
+    q := null;
     if isLeaf then (
         cell := data_row_col;
-        QModule := cell_0; q := cell_1;
+        QModule := cell_0; q = cell_1;
         if instance(q, List) then q = matrix q;
         R := ring QModule;
         q = map(QModule, F, q**R);
-        return graphNode(q);
+        return quotNode(q);
     );
 
     if qRight =!= null and qDown =!= null and qRight != qDown then error("noncommutative");
-    q := if qRight =!= null then qRight else qDown;
+    q = if qRight =!= null then qRight else qDown;
 
-    return graphNode(q, Right=>nodeRight, Down=>nodeDown);
+    return quotNode(q, Right=>nodeRight, Down=>nodeDown);
 )
 
 doubleNestedQuotSchemePoint (Module, List) := (F, data) -> (
