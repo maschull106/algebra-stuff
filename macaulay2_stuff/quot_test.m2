@@ -106,10 +106,10 @@ f20 = map(T0, T2, idMat)
 f10 = map(T0, T1, idMat)
 f32 = map(T2, T3, idMat)
 f31 = map(T1, T3, idMat)
-node3 = graphNode(q3)
-node2 = graphNode(q2, Right=>nodeInfo(node3, f32))
-node1 = graphNode(q1, Down=>nodeInfo(node3, f31))
-node0 = graphNode(
+node3 = quotNode(q3)
+node2 = quotNode(q2, Right=>nodeInfo(node3, f32))
+node1 = quotNode(q1, Down=>nodeInfo(node3, f31))
+node0 = quotNode(
     q0, 
     Right=>nodeInfo(node1, f10),
     Down=>nodeInfo(node2, f20)
@@ -134,10 +134,10 @@ f20 = map(T0, T2, idMat)
 f10 = map(T0, T1, idMat)
 f32 = map(T2, T3, pMat)
 f31 = map(T1, T3, pMat)
-node3 = graphNode(q3)
-node2 = graphNode(q2, Right=>nodeInfo(node3, f32))
-node1 = graphNode(q1, Down=>nodeInfo(node3, f31))
-node0 = graphNode(
+node3 = quotNode(q3)
+node2 = quotNode(q2, Right=>nodeInfo(node3, f32))
+node1 = quotNode(q1, Down=>nodeInfo(node3, f31))
+node0 = quotNode(
     q0, 
     Right=>nodeInfo(node1, f10),
     Down=>nodeInfo(node2, f20)
@@ -164,7 +164,7 @@ q3 = map(P++Q, F, matrix{{1,0},{0,1}}**R)
 -- q3 = map(PQ, F, matrix{{1,1}}**R)
 
 
-print "Q7"
+
 quotPoint7 = doubleNestedQuotSchemePoint(
     F,
     {
@@ -176,7 +176,7 @@ quotPoint7 = doubleNestedQuotSchemePoint(
 Tspace7 = tangentSpace quotPoint7
 
 
-print "Q8"
+
 quotPoint8 = doubleNestedQuotSchemePoint(
     F,
     {
@@ -189,12 +189,12 @@ Tspace8 = tangentSpace quotPoint8
 
 
 
-print "Q10"
+
 p10 = nestedHilbSchemePoint2({R^1, P, one})
 T10 = tangentSpace p10
 
 
-print "Q9"
+
 quotPoint9 = doubleNestedQuotSchemePoint(
     R^1,
     {
