@@ -29,7 +29,7 @@ Below are key concepts needed to define the Double nested Quot scheme of points.
 
 > ### Reverse plane partition
 > Let $\lambda$ be a Young diagram.
-> A *reverse plane partition* of shape $\lambda$ is a filling $\newcommand{\bn}{\boldsymbol{n}} \bn = (\bn_\square)_{\square\in\lambda}$ of the Young diagram with integers, such that the entries are nondecreasing along rows and columns.
+> A *reverse plane partition* of shape $\lambda$ is a filling $\boldsymbol{n} = (\boldsymbol{n}_\square)_{\square\in\lambda}$ of the Young diagram with integers, such that the entries are nondecreasing along rows and columns.
 >
 > **Example:**\
 > For $\lambda=(4,2,2)$, a reverse plane partition is:
@@ -51,17 +51,7 @@ Below are key concepts needed to define the Double nested Quot scheme of points.
 > ### Double nested Quot scheme
 > Let $\lambda$ be a Young diagram and $\boldsymbol{n}$ a reverse plane partition of shape $\lambda$.
 > The *double nested Quot scheme of points* with underlying reverse plane partition $\boldsymbol{n}$ parameterises quotients $(E\rightarrow T_\square)_{\square\in\lambda}$ nested along the structure of $\lambda$, as follows
-> $$
-> \begin{matrix}
->    T_{0,0} & \leftarrow & T_{1,0} & \leftarrow & T_{2,0} & \leftarrow & T_{3,0} & \leftarrow & \dots\\
->    \uparrow && \uparrow && \uparrow && \uparrow\\
->    T_{0,1} & \leftarrow & T_{1,1} & \leftarrow & T_{2,1} & \leftarrow & T_{3,1} & \leftarrow & \dots\\
->    \uparrow && \uparrow && \uparrow && \uparrow\\
->   T_{0,2} & \leftarrow & T_{1,2} & \leftarrow & T_{2,2} & \leftarrow & \ddots\\
->    \uparrow && \uparrow && \uparrow\\
->   \vdots && \vdots && \vdots
-> \end{matrix}
-> $$
+> ![Equation](https://latex.codecogs.com/svg.image?%5Cbegin%7Bmatrix%7DT_%7B0,0%7D&%5Cleftarrow&T_%7B1,0%7D&%5Cleftarrow&T_%7B2,0%7D&%5Cleftarrow&T_%7B3,0%7D&%5Cleftarrow&%5Cdots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5CT_%7B0,1%7D&%5Cleftarrow&T_%7B1,1%7D&%5Cleftarrow&T_%7B2,1%7D&%5Cleftarrow&T_%7B3,1%7D&%5Cleftarrow&%5Cdots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5CT_%7B0,2%7D&%5Cleftarrow&T_%7B1,2%7D&%5Cleftarrow&T_%7B2,2%7D&%5Cleftarrow&%5Cddots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5C%5Cvdots&&%5Cvdots&&%5Cvdots%5Cend%7Bmatrix%7D)\
 > where $T_\square$ is zero-dimensional of length $\boldsymbol{n}_\square$ for every $\square\in\lambda$.
 
 
@@ -86,16 +76,19 @@ There are several methods for instantiating the `DoubleNestedQuotSchemePoint` cl
 The first one is illustrated below (we will show later 
 other ones that simplify the process).\
 We define a point nested as 
-$$
+<!-- $$
 \begin{matrix}
     T_0 & \leftarrow & T_1\\
     \uparrow && \uparrow\\
     T_2 & \leftarrow & T_3.
 \end{matrix}
-$$
+$$ -->
+![Equation](https://latex.codecogs.com/svg.image?%5Cbegin%7Bmatrix%7DT_0&%5Cleftarrow&T_1%5C%5C%5Cuparrow&&%5Cuparrow%5C%5CT_2&%5Cleftarrow&T_3.%5Cend%7Bmatrix%7D)
 
 The specific point we will define is
-$$
+
+![Equation](https://latex.codecogs.com/svg.image?%5Cbegin%7Bmatrix%7D&&%5Cbegin%7Bpmatrix%7D0%5Cend%7Bpmatrix%7D%5C%5C&0&%5Cleftarrow&%5Cfrac%7Bk%5Bx%5D%7D%7Bx%7D%5C%5C%5Cbegin%7Bpmatrix%7D0%5Cend%7Bpmatrix%7D&%5Cuparrow&&%5Cuparrow&%5Cbegin%7Bpmatrix%7D1&0%5Cend%7Bpmatrix%7D%5C%5C&%5Cfrac%7Bk%5Bx%5D%7D%7Bx-1%7D&%5Cleftarrow&%5Cfrac%7Bk%5Bx%5D%7D%7Bx%7D%5Coplus%5Cfrac%7Bk%5Bx%5D%7D%7Bx-1%7D%5C%5C&&%5Cbegin%7Bpmatrix%7D0&1%5Cend%7Bpmatrix%7D%5C%5C&&&&%5Cnwarrow&%5Cbegin%7Bpmatrix%7D1&0%5C%5C0&1%5Cend%7Bpmatrix%7D%5C%5C&&&&&k%5Bx%5D%5E2%5Cend%7Bmatrix%7D)
+<!-- $$
 \begin{matrix}
     && \begin{pmatrix}0\end{pmatrix}\\
     &0 & \leftarrow & \frac{k[x]}{x}\\
@@ -105,7 +98,7 @@ $$
     &&&&\nwarrow & \begin{pmatrix}1&0\\0&1\end{pmatrix}\\
     &&&&& k[x]^2
 \end{matrix}
-$$
+$$ -->
 where the matrices for every arrow describe the maps.
 
 > **Remark.** Although conceptually we work over an algebraically closed field $k$, the computations are done over $\mathbb{Q}$ due to how Macaulay2 works.
