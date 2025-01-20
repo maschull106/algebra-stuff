@@ -51,7 +51,7 @@ Below are key concepts needed to define the Double nested Quot scheme of points.
 > ### Double nested Quot scheme
 > Let $\lambda$ be a Young diagram and $\boldsymbol{n}$ a reverse plane partition of shape $\lambda$.
 > The *double nested Quot scheme of points* with underlying reverse plane partition $\boldsymbol{n}$ parameterises quotients $(E\rightarrow T_\square)_{\square\in\lambda}$ nested along the structure of $\lambda$, as follows
-> ![Equation](https://latex.codecogs.com/svg.image?%5Cbegin%7Bmatrix%7DT_%7B0,0%7D&%5Cleftarrow&T_%7B1,0%7D&%5Cleftarrow&T_%7B2,0%7D&%5Cleftarrow&T_%7B3,0%7D&%5Cleftarrow&%5Cdots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5CT_%7B0,1%7D&%5Cleftarrow&T_%7B1,1%7D&%5Cleftarrow&T_%7B2,1%7D&%5Cleftarrow&T_%7B3,1%7D&%5Cleftarrow&%5Cdots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5CT_%7B0,2%7D&%5Cleftarrow&T_%7B1,2%7D&%5Cleftarrow&T_%7B2,2%7D&%5Cleftarrow&%5Cddots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5C%5Cvdots&&%5Cvdots&&%5Cvdots%5Cend%7Bmatrix%7D)\
+> ![Equation](https://latex.codecogs.com/svg.image?\color{White}%5Cbegin%7Bmatrix%7DT_%7B0,0%7D&%5Cleftarrow&T_%7B1,0%7D&%5Cleftarrow&T_%7B2,0%7D&%5Cleftarrow&T_%7B3,0%7D&%5Cleftarrow&%5Cdots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5CT_%7B0,1%7D&%5Cleftarrow&T_%7B1,1%7D&%5Cleftarrow&T_%7B2,1%7D&%5Cleftarrow&T_%7B3,1%7D&%5Cleftarrow&%5Cdots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5CT_%7B0,2%7D&%5Cleftarrow&T_%7B1,2%7D&%5Cleftarrow&T_%7B2,2%7D&%5Cleftarrow&%5Cddots%5C%5C%5Cuparrow&&%5Cuparrow&&%5Cuparrow%5C%5C%5Cvdots&&%5Cvdots&&%5Cvdots%5Cend%7Bmatrix%7D)\
 > where $T_\square$ is zero-dimensional of length $\boldsymbol{n}_\square$ for every $\square\in\lambda$.
 
 
@@ -83,11 +83,13 @@ We define a point nested as
     T_2 & \leftarrow & T_3.
 \end{matrix}
 $$ -->
-![Equation](https://latex.codecogs.com/svg.image?%5Cbegin%7Bmatrix%7DT_0&%5Cleftarrow&T_1%5C%5C%5Cuparrow&&%5Cuparrow%5C%5CT_2&%5Cleftarrow&T_3.%5Cend%7Bmatrix%7D)
+![Equation](https://latex.codecogs.com/svg.image?\color{White}%5Cbegin%7Bmatrix%7DT_0&%5Cleftarrow&T_1%5C%5C%5Cuparrow&&%5Cuparrow%5C%5CT_2&%5Cleftarrow&T_3.%5Cend%7Bmatrix%7D)
 
 The specific point we will define is
 
-![Equation](https://latex.codecogs.com/svg.image?%5Cbegin%7Bmatrix%7D&&%5Cbegin%7Bpmatrix%7D0%5Cend%7Bpmatrix%7D%5C%5C&0&%5Cleftarrow&%5Cfrac%7Bk%5Bx%5D%7D%7Bx%7D%5C%5C%5Cbegin%7Bpmatrix%7D0%5Cend%7Bpmatrix%7D&%5Cuparrow&&%5Cuparrow&%5Cbegin%7Bpmatrix%7D1&0%5Cend%7Bpmatrix%7D%5C%5C&%5Cfrac%7Bk%5Bx%5D%7D%7Bx-1%7D&%5Cleftarrow&%5Cfrac%7Bk%5Bx%5D%7D%7Bx%7D%5Coplus%5Cfrac%7Bk%5Bx%5D%7D%7Bx-1%7D%5C%5C&&%5Cbegin%7Bpmatrix%7D0&1%5Cend%7Bpmatrix%7D%5C%5C&&&&%5Cnwarrow&%5Cbegin%7Bpmatrix%7D1&0%5C%5C0&1%5Cend%7Bpmatrix%7D%5C%5C&&&&&k%5Bx%5D%5E2%5Cend%7Bmatrix%7D)
+![Equation](https://latex.codecogs.com/svg.image?\color{White}%5Cbegin%7Bmatrix%7D&&%5Cbegin%7Bpmatrix%7D0%5Cend%7Bpmatrix%7D%5C%5C&0&%5Cleftarrow&%5Cfrac%7Bk%5Bx%5D%7D%7Bx%7D%5C%5C%5Cbegin%7Bpmatrix%7D0%5Cend%7Bpmatrix%7D&%5Cuparrow&&%5Cuparrow&%5Cbegin%7Bpmatrix%7D1&0%5Cend%7Bpmatrix%7D%5C%5C&%5Cfrac%7Bk%5Bx%5D%7D%7Bx-1%7D&%5Cleftarrow&%5Cfrac%7Bk%5Bx%5D%7D%7Bx%7D%5Coplus%5Cfrac%7Bk%5Bx%5D%7D%7Bx-1%7D%5C%5C&&%5Cbegin%7Bpmatrix%7D0&1%5Cend%7Bpmatrix%7D%5C%5C&&&&%5Cnwarrow&%5Cbegin%7Bpmatrix%7D1&0%5C%5C0&1%5Cend%7Bpmatrix%7D%5C%5C&&&&&k%5Bx%5D%5E2%5Cend%7Bmatrix%7D)
+
+
 <!-- $$
 \begin{matrix}
     && \begin{pmatrix}0\end{pmatrix}\\
