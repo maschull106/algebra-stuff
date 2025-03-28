@@ -29,7 +29,7 @@ Below are key concepts needed to define the Double nested Quot scheme of points.
 
 > ### Reverse plane partition
 > Let $\lambda$ be a Young diagram.
-> A *reverse plane partition* of shape $\lambda$ is a filling $\boldsymbol{n} = (\boldsymbol{n}_\square)_{\square\in\lambda}$ of the Young diagram with integers, such that the entries are nondecreasing along rows and columns.
+> A *reverse plane partition* of shape $\lambda$ is a filling $\boldsymbol{n} = (\boldsymbol{n}_ \square)_ {\square\in\lambda}$ of the Young diagram with integers, such that the entries are nondecreasing along rows and columns.
 >
 > **Example:**\
 > For $\lambda=(4,2,2)$, a reverse plane partition is:
